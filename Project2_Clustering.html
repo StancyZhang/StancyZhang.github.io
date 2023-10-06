@@ -1,0 +1,651 @@
+<!DOCTYPE HTML>
+<!--
+	Stellar by HTML5 UP
+	html5up.net | @ajlkn
+	Free for personal and commercial use under the CCA 3.0 license (html5up.net/license)
+-->
+<html>
+	<head>
+		<title>Stancy Zhang</title>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
+		<link rel="stylesheet" href="assets/css/main.css" />
+		<noscript><link rel="stylesheet" href="assets/css/noscript.css" /></noscript>
+	</head>
+	<body class="is-preload">
+
+		<!-- Wrapper -->
+			<div id="wrapper">
+
+				<!-- Header -->
+					<header id="header">
+						<h1>Unlocking Data Secrets with Clustering</h1>
+						<h3>An intricate investigation into large datasets, utilizing advanced spectral clustering techniques to categorize and unravel hidden groupings. Comparisons to k-means clustering provide a nuanced understanding of data structure and relationships.</h3>
+						<p>April 2021</p>
+						<a href="index.html" class="button">Go To Main</a>
+					</header>
+
+				<!-- Main -->
+					<div id="main">
+
+						<!-- Content -->
+							<section id="content" class="main">
+								<h2>Goal</h2>
+
+<p>In this blog post, I am going to introduce spectral clustering and want to write a tutorial on a simple version of the spectral clustering algorithm for clustering data points with visual demonstrations.</p>
+<h2>Introduction -- What is clustering?</h2>
+<p>When a data set with a large amount of data points is given, it is sometimes hard to categorize all the data points in meaningful groups that we usually called such a separation step as <em>clustering</em>. <em>Spectral clustering</em> is one of the most important analysis tools for identifying various parts in one complex-structure data set. Before discussing how to use spectral clustering for group identification within data sets, we are going to show few examples to understand the meaning of separating data sets into groups by using the <em>k-means</em> -- another common method to separate data sets when data sets distributed as two natural &quot;blobs.&quot;</p>
+<h3>Packages</h3>
+<p>First of all, we need to import the packages we are going to use throughout the tutorial.</p>
+<pre><code class="language-python"># common package for array analysis
+import numpy as np
+# generate data set
+from sklearn import datasets
+# plot graphs
+from matplotlib import pyplot as plt
+# k-means for separation of data sets with two natural &quot;blobs&quot;
+from sklearn.cluster import KMeans
+# compute the distance between two data points of an array by forming a matrix
+from sklearn.metrics.pairwise import pairwise_distances
+# minimize scalar functions
+from scipy.optimize import minimize
+</code></pre>
+<h3>Clustering Examples By K-Means</h3>
+<p>Now, we are ready to generate a random data set and show its distributions of the data points by creating a scatterplot.</p>
+<pre><code class="language-python"># set the size of the data set
+n = 200
+# control the randomness for each time running this cell
+np.random.seed(1111)
+# generate a date set of size n in a matrix with the Euclidean coordinates of the data
+# points forming as two blobs and a data set of size n with integer labels of each blob
+X, y = datasets.make_blobs(n_samples = n, shuffle = True, random_state = None, centers = 2, cluster_std = 2.0)
+# plot a scatterplot based on the Euclidean coordinates of the data points
+plt.scatter(X[:,0], X[:,1])
+</code></pre>
+<span class="image"><img src="images/Blog2_files/Blog2_4_1.png" alt="" width="600" height="400" /></span>
+<p>Based on the above graph showing the data set we just created, it is easy to notice that the data set mainly forms two clusters, which is caused by using <code>datasets.make_blobs</code>. Then, we want to use the k-means to separate those two clusters in different colors since k-means is good at separating circular-ish blobs.</p>
+<pre><code class="language-python"># compute k-means clustering with two clusters
+km = KMeans(n_clusters = 2)
+# fit the data points in k-means
+km.fit(X)
+# plot a scatterplot based on the Euclidean coordinates of the
+# data points with a group color, predicting by the k-means
+plt.scatter(X[:,0], X[:,1], c = km.predict(X))
+</code></pre>
+<span class="image"><img src="images/Blog2_files/Blog2_6_1.png" alt="" width="600" height="400" /></span>
+<p>It can be seen that the data set is clearly categorized into two groups, and each point is in either yellow or purple by the k-means. However, the k-means algorithm might not be always good at clustering when the data set is in other shapes. Let's see an example below.</p>
+<pre><code class="language-python"># set the size of the data set
+n = 200
+# control the randomness for each time running this cell
+np.random.seed(1234)
+# generate a date set of size n with data points forming as two
+# moons and a data set of size n with integer labels of each moon
+X, y = datasets.make_moons(n_samples = n, shuffle = True, noise = 0.05, random_state = None)
+# plot a scatterplot based on the Euclidean coordinates of the data points
+plt.scatter(X[:,0], X[:,1])
+</code></pre>
+<span class="image"><img src="images/Blog2_files/Blog2_8_1.png" alt="" width="600" height="400" /></span>
+<p>Obviously, there are still two clusters in the data set. The data set no longer looks like two blobs. Instead, the data set looks like two crescents. Similar to what we did in the previous steps, we are going to use k-means again to predict the clusters in this data set.</p>
+<pre><code class="language-python"># compute k-means clustering with two clusters
+km = KMeans(n_clusters = 2)
+# fit the data points in k-means
+km.fit(X)
+# plot a scatterplot based on the Euclidean coordinates of the
+# data points with a group color, predicting by the k-means
+plt.scatter(X[:,0], X[:,1], c = km.predict(X))
+</code></pre>
+<span class="image"><img src="images/Blog2_files/Blog2_10_1.png" alt="" width="600" height="400" /></span>
+<p>By using the k-means here, we found out that the k-means did not completely separate the two crescents in the data set since each crescent contains both yellow and purple data points. This is because k-means is good at separating circular clusters by design.</p>
+<p>So, we are going to learn how to use spectral clustering to correctly cluster these two crescents in the following several parts.</p>
+<h2>Spectral Clustering</h2>
+<h3>Part A -- How to create a similarity matrix?</h3>
+<p>Firstly, we need to construct the <em>similarity matrix</em> $$\mathbf{A}$$ with the following requirements:</p>
+<ul>
+<li>
+<p>$$\mathbf{A}$$ is a matrix, forming by 2d <code>np.ndarray</code>, with <code>n</code> rows and <code>n</code> columns where <code>n</code> is the number of data points.</p>
+</li>
+<li>
+<p>Each entry in $$\mathbf{A}$$ is calculated by finding whether the distance between two points in the matrix <code>X</code> is within <code>epsilon</code>. We will consider <code>epsilon</code> to be <code>0.4</code> for this part.</p>
+</li>
+<li>
+<p>The diagonal entries in $$\mathbf{A}$$, which are the entries where the row number equals the column number, should all be equal to <code>0</code>.</p>
+</li>
+</ul>
+<p>Recall that in the <strong>Introduction</strong>, we defined the following variables:</p>
+<ul>
+<li>
+<p><code>n</code>: the size of the data set, which is <code>200</code></p>
+</li>
+<li>
+<p>$$\mathbf{X}$$: a matrix containing the Euclidean coordinates of the data points</p>
+</li>
+<li>
+<p>$$\mathbf{y}$$: a vector containing the labels of each point</p>
+</li>
+</ul>
+<p>In order to calculate the distance between two data points, we will use <code>pairwise_distances</code> from the <code>sklearn</code> package, and this will generate a matrix containing value in each entry as the distance between two data points in the matrix $$\mathbf{X}$$. For instance, the value in the first row and second column of the output matrix represents the distance between the first point and the second point in the matrix $$\mathbf{X}$$. Comparing to <code>epsilon</code>and then multiplying by <code>1.0</code>, we will get a matrix consisting of <code>0.</code> and <code>1.</code>. Lastly, we will use <code>np.fill_diagonal()</code> to make the diagonal entries of a matrix to become a certain value. For the similarity matrix here, we will make its diagonal entries be <code>0</code>.</p>
+<pre><code class="language-python"># set the value of the epsilon that decides the distance between two points
+epsilon = 0.4
+
+# find the matrix A where the entry is 1 if the distance between two points in X is within epsilon
+# and the entry is 0 if the distance between two points in X is greater than epsilon
+A = (pairwise_distances(X) &lt;= epsilon)*1.0
+
+# reset the diagonal entries of the matrix A to be 0
+np.fill_diagonal(A, 0)
+
+# show the output A
+A
+</code></pre>
+<pre><code>array([[0., 0., 0., ..., 0., 0., 0.],
+       [0., 0., 0., ..., 0., 0., 0.],
+       [0., 0., 0., ..., 0., 1., 0.],
+       ...,
+       [0., 0., 0., ..., 0., 1., 1.],
+       [0., 0., 1., ..., 1., 0., 1.],
+       [0., 0., 0., ..., 1., 1., 0.]])
+</code></pre>
+
+<h3>Part B -- How to calculate the binary norm cut objective with the similarity matrix?</h3>
+<p>From <strong>Part A</strong>, we have the similarity matrix $$\mathbf{A}$$ showing whether each point is within distance, <code>epsilon</code>, to other points. Recall that the cluster membership $$\mathbf{y}$$ contains values of <code>0</code> and <code>1</code> as the labels of the data points in $$\mathbf{X}$$. For this part, we want to figure out how to cluster the data points in $$\mathbf{X}$$ by using the <em>binary norm cut objective</em> of the similarity matrix $$\mathbf{A}$$:</p>
+<p>$$N_{\mathbf{A}}(C_0, C_1)\equiv \mathbf{cut}(C_0, C_1)\left(\frac{1}{\mathbf{vol}(C_0)} + \frac{1}{\mathbf{vol}(C_1)}\right);.$$</p>
+<p>where</p>
+<ul>
+<li>$$\mathbf{cut}(C_0, C_1) \equiv \sum_{i \in C_0, j \in C_1} a_{ij}$$ is the <em>cut</em> of the clusters $$C_0$$ and $$C_1$$, where $$C_0$$ and $$C_1$$ are the two clusters of the data points in $$\mathbf{X}$$.</li>
+<li>$$\mathbf{vol}(C_0) \equiv \sum_{i \in C_0}d_i$$, where $$d_i = \sum_{j = 1}^n a_{ij}$$ is the <em>degree</em> of row $$i$$ calculated by the $$i$$th row-sum of the similarity matrix $$\mathbf{A}$$.</li>
+</ul>
+<p>Based on the binary norm cut objective, we may know that if $$N_{\mathbf{A}}(C_0, C_1)$$ is small, a pair of clusters $$C_0$$ and $$C_1$$ is usually considered to be a &quot;good&quot; partition of the data. Hence, the smaller the value of $$N_{\mathbf{A}}(C_0, C_1)$$ is, the better partition of the pair, $$C_0$$ and $$C_1$$, is.</p>
+<p>Let's consider $$\mathbf{cut}$$ and $$\mathbf{vol}$$ separately to understand the binary norm cut objective better.</p>
+<h4>B.1 The Cut Term</h4>
+<p>The cut term $$\mathbf{cut}(C_0, C_1)$$ calculates the sum of all the entries where the two data points are in different clusters in matrix $$\mathbf{A}$$. Thus, it represents the number of nonzero entries in $$\mathbf{A}$$ that relate points in cluster $$C_0$$ to points in cluster $$C_1$$. We also know that the value <code>0.</code> in $$\mathbf{A}$$ represents the distance between two points are greater than <code>epsilon</code>. Hence, the smaller the cut term is, the further the distance between the points in $$C_0$$ and the points in $$C_1$$ is.</p>
+<p>Based on the definition of the cut term above, we are going to define a <code>cut(A, y)</code> function that takes a similarity matrix $$\mathbf{A}$$ and a vector $$\mathbf{y}$$ as parameters and return the value of the cut term below.</p>
+<pre><code class="language-python">def cut(A, y):
+    &quot;&quot;&quot;
+    Calculate the cut term by adding all the entries in the input 
+    similarity matrix A when two data points are
+    not in the same cluster based on the input label vector y.
+    
+    Parameter
+    ----------
+    A: the input similarity matrix consisting of values 0. and 1.
+    y: the input vector represents the labels of the data points
+    
+    Return 
+    ----------
+    cut: a floating number represents the sum of all the entries where two 
+    points are in different clusters, found by vector y, in matrix A
+    &quot;&quot;&quot;
+
+    # initialize cut
+    cut = 0
+    
+    # use a nested for loop based on y to loop over each row and column
+    # of the similarity matrix A
+    for i in range(len(y)):
+        for j in range(len(y)):
+            if y[i] != y[j]: # if two data points are not in the same clusters
+                cut = cut + A[i, j] # add the value of that entry in A to cut
+    
+    return cut
+</code></pre>
+<p>By using the similarity matrix $$\mathbf{A}$$ and the vector $$\mathbf{y}$$ as the true labels defined before, let's see what the cut objective is for our data set defined at the beginning.</p>
+<pre><code class="language-python">cut(A, y) # cut term of true labels y
+</code></pre>
+<pre><code>26.0
+</code></pre>
+<p>Thus, we have the cut objective for the true labels $$\mathbf{y}$$ to be <code>26.0</code>. Then, we want to also generate a fake random labels called $$\mathbf{rand_vec}$$, which is a random vector of random labels of the same length <code>n</code> with each label as either 0 or 1, for comparison and we also check the cut objectives for $$\mathbf{rand_vec}$$.</p>
+<pre><code class="language-python"># control the randomness for each time running this cell
+np.random.seed(1234)
+# generate a random vector of length n with 0 and 1 as labels
+rand_vec = np.random.randint(0, 2, n)
+# cut term of fake labels rand_vec
+cut(A, rand_vec)
+</code></pre>
+<pre><code>2308.0
+</code></pre>
+<p>Thus, we have that the cut objective for the fake random labels $$\mathbf{rand_vec}$$ is <code>2308.0</code>, which is much larger than the one for the true labels $$\mathbf{y}$$ above, which means that the points in $$C_0$$ and the points in $$C_1$$ are much closer produced by the fake random labels $$\mathbf{rand_vec}$$.</p>
+<h4>B.2 The Volume Term</h4>
+<p>The second factor in the binary norm cut objective equation we are going to investigate is the volumn term, $$\mathbf{vol}(C_0)$$ and $$\mathbf{vol}(C_1)$$. The larger the volumn term of a cluster is, the bigger the cluster is. Recall that a certain row in a similiarity matrix $$\mathbf{A}$$ represents the whether the first data point is far away from the rest of the data points.</p>
+<p>In this part, we need to first find the rows in $$\mathbf{A}$$ correspond to a certain label and sum all these rows in $$\mathbf{A}$$ in order to calculate the size of each cluster -- the volume term of each cluster. We want to write a function called <code>vols(A, y)</code> that takes a similarity matrix $$\mathbf{A}$$ and a vector $$\mathbf{y}$$ as parameters and return the value of the volume term for each $$C_0$$ and $$C_1$$ in a tuple below.</p>
+<pre><code class="language-python">def vols(A, y):
+    &quot;&quot;&quot;
+    Calculate the volume term for each cluster by adding all the entries 
+    in the input similarity matrix A for the data points in the same 
+    cluster based on the input label vector y.
+    
+    Parameter
+    ----------
+    A: the input similarity matrix consisting of values 0. and 1.
+    y: the input vector represents the labels of the data points
+    
+    Return 
+    ----------
+    v0, v1: a tuple consisting two floating numbers where each floating number 
+    represents the volume term of a cluster
+    &quot;&quot;&quot;
+
+    # find the sum of the rows in A where the value in true labels y equals 0
+    v0 = np.sum(A[y == 0])
+    
+    # find the sum of the rows in A where the value in true labels y equals 1
+    v1 = np.sum(A[y == 1])
+    return v0, v1
+</code></pre>
+
+<p>Let's check for the volume terms, $$\mathbf{vol}(C_0)$$ and $$\mathbf{vol}(C_1)$$, by using the true labels $$\mathbf{y}$$.</p>
+<pre><code class="language-python"># volume terms of true labels y
+v0, v1 = vols(A, y)
+v0, v1
+</code></pre>
+<pre><code>(2299.0, 2217.0)
+</code></pre>
+<p>Thus, we have that $$\mathbf{vol}(C_0)$$ is <code>2299.0</code>, which is larger than $$\mathbf{vol}(C_1)$$ with a value of <code>2217.0</code> by using the true labels $$\mathbf{y}$$.</p>
+<p>Let's check for the volume terms, $$\mathbf{vol}(C_0)$$ and $$\mathbf{vol}(C_1)$$, by using the fake labels $$\mathbf{rand_vec}$$.</p>
+<pre><code class="language-python"># volume terms of fake labels rand_vec
+v0_fake, v1_fake = vols(A, rand_vec)
+v0_fake, v1_fake
+</code></pre>
+<pre><code>(2336.0, 2180.0)
+</code></pre>
+<p>Thus, we have that $$\mathbf{vol}(C_0)$$ is <code>2336.0</code>, which is larger than $$\mathbf{vol}(C_1)$$ with a value of <code>2180.0</code> by using the fake labels $$\mathbf{rand_vec}$$.</p>
+<p>After defining the above two functions in this part, we want to write a function called <code>normcut(A, y)</code> to compute the binary normalized cut objective of a similarity matrix $$\mathbf{A}$$ with clustering vector $$\mathbf{y}$$.</p>
+<pre><code class="language-python">def normcut(A, y):
+    &quot;&quot;&quot;
+    Calculate the binary norm cut objective by using the cut(A, y) function 
+    and the vols(A, y) function based on the binary norm cut objective equation.
+    
+    Parameter
+    ----------
+    A: the input similarity matrix consisting of values 0. and 1.
+    y: the input vector represents the labels of the data points
+    
+    Return 
+    ----------
+    binary: a floating number represents the binary norm cut objective
+    &quot;&quot;&quot;
+
+    # define binary by using the cut(A, y) function and the vols(A, y) function 
+    # based on the binary normalized cut objective equation
+    binary = cut(A, y)*(1/vols(A, y)[0] + 1/vols(A, y)[1])
+    return binary
+</code></pre>
+<p>Now, let's compare the <code>normcut</code> objective using both the true labels $$\mathbf{y}$$ and the fake labels $$\mathbf{rand_vec}$$ defined above by using our <code>normcut(A, y)</code> function.</p>
+<pre><code class="language-python"># normcut objective of true labels y
+normcut(A, y)
+</code></pre>
+<pre><code>0.02303682466323045
+</code></pre>
+<pre><code class="language-python"># normcut objective of fake labels rand_vec
+normcut(A, rand_vec)
+</code></pre>
+<pre><code>2.046729294960412
+</code></pre>
+<p>Thus, the normcut objective by using the true labels $$\mathbf{y}$$ is about <code>0.02304</code>, and one by using the fake labels $$\mathbf{rand_vec}$$ is about <code>2.04673</code>. Comparing these two normcut objectives, we may conclude that the normcut objective of the fake labels is much higher than the true labels. Considering both the cut term and the volume term above, we may realize that the large cut term might cause the normcut objective of the fake labels to be large. Hence, we found out that the clusters have a better partition with the true labels than the fake labels.</p>
+<p>Overall, the binary normcut objective should have clusters $$C_0$$ and $$C_1$$ such that:</p>
+<ol>
+<li>The clusters, $$C_0$$ and $$C_1$$, stay far away from each other to keep as few entries of $$\mathbf{A}$$ that join both clusters as possible.</li>
+<li>Neither the clusters, $$C_0$$ and $$C_1$$, are too small.</li>
+</ol>
+<h3>Part C -- How to prepare for the best clustering?</h3>
+<p>Though we might be able to find a cluster vector $$\mathbf{y}$$ such that we may get a very small <code>normcut(A,y)</code> which is good for clustering, the process of finding such a cluster vector to reach the best clustering is very hard. Hence, we are going to define a new vector $$\mathbf{z} \in \mathbb{R}^n$$ such that:</p>
+<p>$$
+z_i =
+\begin{cases}
+\frac{1}{\mathbf{vol}(C_0)} &amp;\quad \text{if } y_i = 0 \
+-\frac{1}{\mathbf{vol}(C_1)} &amp;\quad \text{if } y_i = 1 \
+\end{cases}
+$$</p>
+<p>Then, we have:</p>
+<p>$$\mathbf{N}_{\mathbf{A}}(C_0, C_1) = 2\frac{\mathbf{z}^T (\mathbf{D} - \mathbf{A})\mathbf{z}}{\mathbf{z}^T\mathbf{D}\mathbf{z}};,$$</p>
+<p>by linear algebra, where $$\mathbf{D}$$ is the diagonal matrix with nonzero entries $$d_{ii} = d_i$$, and $$d_i = \sum_{j = 1}^n a_i$$ is the <em>degree</em> of row $$i$$.</p>
+<p>For this part, we are going to define a function called <code>transform(A, y)</code> that takes a similarity matrix $$\mathbf{A}$$ and a vector $$\mathbf{y}$$ as parameters and return $$\mathbf{z}$$.</p>
+<pre><code class="language-python">def transform(A, y):
+    &quot;&quot;&quot;
+    Create the z vector for optimal clustering based on the above zi formula. 
+    Specifically speaking, z vector should be constructed by making the 
+    entries with label 0 in y to be 1/v0, where v0 is the volume term of the 
+    cluster 0, and making the entries with label 1 in y to be 1/v1, where v1 
+    is the volume term of the cluster 1.
+    
+    Parameter
+    ----------
+    A: the input similarity matrix consisting of values 0. and 1.
+    y: the input vector represents the labels of the data points
+    
+    Return 
+    ----------
+    z: a numpy array represents the new vector for optimal clustering
+    &quot;&quot;&quot;
+
+    # use the defined vols(A, y) function to calculate v0 and v1
+    v0, v1 = vols(A, y)
+    
+    # find the z_c0 and z_c1 based on the formula about the new vector z above
+    z_c0 = 1/v0
+    z_c1 = -1/v1
+    
+    # make the entries in y with label 0 to have a value of z_c0
+    # and make the entries in y with label 1 to have a value of z_c1
+    z = (1 - y)*z_c0 + y*z_c1
+    
+    return z
+</code></pre>
+<p>By using the <code>transform(A, y)</code> function, we want to check for the difference between the matrix product and the normcut objective from the above equation. Since the computer arithmetic might not consider the equation above to be exact, we need to use <code>np.isclose(a, b)</code> to check whether <code>a</code> is &quot;close&quot; to <code>b</code>.</p>
+<pre><code class="language-python"># get z by the transform(A, y) function
+z = transform(A, y)
+# find the diagonal matrix with nonzero entries of the row sum in A
+D = np.diag(A.sum(axis = 1))
+# check for difference
+np.isclose(normcut(A, y), 2*z.T@(D - A)@z/(z.T@D@z))
+</code></pre>
+<pre><code>True
+</code></pre>
+<p>Since the output is <code>True</code>, it represents that the left hand side of the equation has a difference less than the smallest amount that the computer is able to quantify from the right hand side of the equation, which we can treat this result as both sides of the equations to be equal.</p>
+<p>By using the similar step, we also want to check for the identity $$\mathbf{z}^T\mathbf{D}\mathbb{1} = 0$$.</p>
+<pre><code class="language-python">np.isclose(z.T@D@np.ones(n), 0) # check for difference
+</code></pre>
+<pre><code>True
+</code></pre>
+<p>Such an output shows that the number of the positive entries is similar to the number of the negative entries in $$\mathbf{z}$$.</p>
+<h3>Part D -- How to minimize normcut objective?</h3>
+<p>We might find out that the problem of minimizing the normcut objective is mathematically related to the problem of minimizing the function</p>
+<p>$$ R_\mathbf{A}(\mathbf{z})\equiv \frac{\mathbf{z}^T (\mathbf{D} - \mathbf{A})\mathbf{z}}{\mathbf{z}^T\mathbf{D}\mathbf{z}} $$</p>
+<p>subject to the condition $$\mathbf{z}^T\mathbf{D}\mathbb{1} = 0$$. In order to get the orthogonal complement of $$\mathbf{z}$$ relative to $$\mathbf{D}\mathbf{1}$$ to substitute it into the equation, we may define an <code>orth_obj</code> function below.</p>
+<pre><code class="language-python">def orth(u, v):
+    return (u @ v) / (v @ v) * v
+
+e = np.ones(n) 
+
+d = D @ e
+
+def orth_obj(z):
+    z_o = z - orth(z, d)
+    return (z_o @ (D - A) @ z_o)/(z_o @ D @ z_o)
+</code></pre>
+<p>Next, we want to use the <code>minimize</code> function from <code>scipy.optimize</code> to minimize the function <code>orth_obj</code> with respect to $$\mathbf{z}$$ as $$\mathbf{z_}$$ for optimization.</p>
+<pre><code class="language-python"># use the minimize function for minimizing orth_obj with respect to z as z_
+# np.random.rand(n) is used for better minimization
+z_ = minimize(orth_obj, np.random.rand(n))
+</code></pre>
+<h3>Part E -- Are we able to create a perfect spectral clustering?</h3>
+<p>In <strong>Part C</strong>, we know that $$\mathbf{z}$$ contains value in different signs determined by the cluster labels. Similarly, we can know the information of the cluster label of data point <code>i</code> by checking for the sign of $$\mathbf{z_min}$$. After knowing the cluster labels for all the data points in $$\mathbf{X}$$, we are able to plot the original data by using one color for points such that <code>z_min[i] &lt; 0</code> and another color for points such that <code>z_min[i] &gt;= 0</code> for clustering.</p>
+<pre><code class="language-python"># find the z_min by using the z_ in Part D to know the cluster membership by z_.x
+z_min = z_.x
+# plot a scatterplot to show the spectral clustering based on the sign of z_min
+plt.scatter(X[:, 0], X[:, 1], c = z_min &lt; 0)
+</code></pre>
+<span class="image"><img src="images/Blog2_files/Blog2_46_1.png" alt="" width="600" height="400" /></span>
+<p>Great! The data points are successfully clustered into two crescents with different colors!</p>
+<h3>Part F -- Is there a more efficient method?</h3>
+<p>However, there is actually a faster way by using eigenvalues and eigenvectors to solve the problem from <strong>Part E</strong> than explicitly optimizing the orthogonal objective.</p>
+<p>The Rayleigh-Ritz Theorem states that the minimizing $$\mathbf{z}$$ must be the solution with smallest eigenvalue of the generalized eigenvalue problem</p>
+<p>$$ (\mathbf{D} - \mathbf{A}) \mathbf{z} = \lambda \mathbf{D}\mathbf{z};, \quad \mathbf{z}^T\mathbf{D}\mathbb{1} = 0$$</p>
+<p>which is equivalent to the standard eigenvalue problem</p>
+<p>$$ \mathbf{D}^{-1}(\mathbf{D} - \mathbf{A}) \mathbf{z} = \lambda \mathbf{z};, \quad \mathbf{z}^T\mathbb{1} = 0;.$$</p>
+<p>Since $$\mathbb{1}$$ is the eigenvector with smallest eigenvalue of the matrix $$\mathbf{D}^{-1}(\mathbf{D} - \mathbf{A})$$, we are going to figure out the vector $$\mathbf{z}$$ that we want must be the eigenvector with the second-smallest eigenvalue.</p>
+<p>So, we need to construct the (normalized) <em>Laplacian</em> matrix of the similarity matrix $$\mathbf{A}$$</p>
+<p>$$\mathbf{L} = \mathbf{D}^{-1}(\mathbf{D} - \mathbf{A})$$</p>
+<p>to find the eigenvector $$\mathbf{z_eig}$$ corresponding to its second-smallest eigenvalue.</p>
+<pre><code class="language-python"># construct the Laplacian matrix
+L = np.linalg.inv(D)@(D - A)
+# get the eigenvalues and eigenvectors from L
+eig_val, eig_vec = np.linalg.eig(L)
+
+# argsort the eigenvalues and the eigenvectors from 
+# the smallest eigenvalue to the largest eigenvalue
+ix = eig_val.argsort()
+eig_val, eig_vec = eig_val[ix], eig_vec[:, ix]
+
+# find the eigenvector of the second-smallest eigenvalue
+z_eig = eig_vec[:, 1]
+</code></pre>
+<p>Now, let's plot the data again by using the $$\mathbf{z_eig}$$ we found. Similarly, we can use the sign of $$\mathbf{z_eig}$$ to decide the cluster label.</p>
+<pre><code class="language-python"># plot a scatterplot to show the spectral clustering based on the sign of z_eig
+plt.scatter(X[:, 0], X[:, 1], c = z_eig &gt; 0)
+</code></pre>
+<span class="image"><img src="images/Blog2_files/Blog2_51_1.png" alt="" width="600" height="400" /></span>
+<p>Hence, we found out that the data set is also clearly separated into two groups by using $$\mathbf{z_eig}$$!</p>
+<h3>Part G -- How to write the spectral clustering function?</h3>
+<p>From the several parts above, we found out that the method of finding the $$\mathbf{z_eig}$$ by using eigenvalues and eigenvectors is very efficient. Thus, we are going to summarize the several parts above to define a function called  <code>spectral_clustering(X, epsilon)</code> by taking $$\mathbf{X}$$ and the distance threshold <code>epsilon</code> as input parameters and  return an array of binary labels of <code>0.</code> and <code>1.</code>.</p>
+<pre><code class="language-python">def spectral_clustering(X, epsilon):
+    &quot;&quot;&quot;
+    Generate an array of binary labels of 0 and 1 through spectral clustering.
+    The function will first construct the similarity matrix A with values 0, 
+    if the distance between two data points is greater or equal than epsilon, 
+    and 1, if the distance between two data points is smaller than epsilon, 
+    where each entry shows whether two data points are close to each other.
+    Then, the function will find the eigenvector of the second-smallest 
+    eigenvalue by constructing the Laplacian matrix.
+    Finally, the function will use the sign of that eigenvector to decide 
+    whether the binary label is 0 or 1.
+    
+    Parameter
+    ----------
+    X: the input matrix with each data point of Euclidean coordinates as a row
+    epsilon: the input floating number as distance threshold between two data 
+    points in X
+    
+    Return 
+    ----------
+    binary_label: a numpy array that consists of the cluster label of 0 or 1 
+    for each data point in X
+    &quot;&quot;&quot;
+    
+    # construct the similarity matrix A
+    # find the matrix A where the entry is 1 if the distance between two points 
+    # in X is within epsilon, and the entry is 0 if the distance between two 
+    # points in X is greater than epsilon; lastly reset the diagonal entries of 
+    # the matrix A to be 0
+    A = (pairwise_distances(X) &lt;= epsilon)*1.0
+    np.fill_diagonal(A, 0)
+    
+    # construct the Laplacian matrix
+    # sort the eigenvalues and the eigenvectors from the smallest eigenvalue to 
+    # the largest eigenvalue
+    D = np.diag(A.sum(axis = 1))
+    L = np.linalg.inv(D)@(D - A)
+    
+    # compute the eigenvector with second-smallest eigenvalue of the Laplacian matrix
+    # by sorting the eigenvalues and the eigenvectors from the smallest eigenvalue to 
+    # the largest eigenvalue first
+    eig_val, eig_vec = np.linalg.eig(L)
+    eig_val, eig_vec = eig_val[eig_val.argsort()], eig_vec[:, eig_val.argsort()]
+    z_eig = eig_vec[:, 1]
+    
+    # return labels based on this eigenvector z_eig
+    # find the binary_label with cluster label 1 if the element in z_eig is greater 
+    # than 0 and otherwise, with cluster label 0
+    binary_label = (z_eig &gt; 0)*1.0
+    
+    return binary_label
+</code></pre>
+<p>Let's use the data we defined at the beginning to check for our <code>spectral_clustering(X, epsilon)</code> function.</p>
+<pre><code class="language-python"># check the function
+spectral_clustering(X, epsilon)
+</code></pre>
+<pre><code>array([1., 1., 0., 0., 0., 0., 0., 0., 1., 1., 1., 0., 0., 1., 1., 1., 1.,
+       0., 0., 0., 1., 1., 1., 0., 0., 1., 0., 1., 1., 0., 0., 1., 1., 1.,
+       1., 1., 0., 1., 1., 0., 1., 0., 0., 0., 0., 0., 0., 1., 1., 1., 0.,
+       0., 1., 1., 0., 0., 1., 1., 1., 0., 0., 0., 1., 0., 1., 0., 0., 0.,
+       0., 1., 1., 1., 1., 0., 0., 0., 1., 0., 1., 0., 0., 0., 0., 1., 1.,
+       1., 1., 0., 0., 0., 0., 1., 0., 0., 1., 1., 1., 1., 0., 0., 1., 1.,
+       1., 0., 1., 1., 0., 0., 1., 1., 0., 0., 0., 1., 0., 0., 0., 0., 1.,
+       1., 1., 0., 1., 1., 1., 0., 1., 0., 1., 1., 0., 0., 0., 0., 1., 1.,
+       1., 1., 1., 1., 1., 1., 0., 0., 1., 0., 0., 0., 0., 0., 0., 0., 0.,
+       1., 1., 0., 1., 0., 0., 0., 1., 1., 0., 0., 1., 1., 1., 0., 0., 0.,
+       1., 0., 1., 1., 1., 0., 0., 0., 0., 1., 1., 0., 0., 1., 1., 1., 0.,
+       1., 1., 1., 0., 1., 0., 1., 1., 1., 1., 0., 0., 0.])
+</code></pre>
+<p>The above output looks correct since the returned binary label should consist of values <code>0</code> and <code>1</code>.</p>
+<pre><code class="language-python"># plot a scatterplot to show the spectral clustering 
+# based on the spectral_clustering(X, epsilon) function
+plt.scatter(X[:, 0], X[:, 1], c = spectral_clustering(X, epsilon))
+</code></pre>
+<span class="image"><img src="images/Blog2_files/Blog2_58_1.png" alt="" width="600" height="400" /></span>
+<p>The above clear clustering is the same as the plot we got from the previous parts. Hence, this means that the <code>spectral_clustering(X, epsilon)</code> function works, and spectral clustering works for our data set with two crescents.</p>
+<h3>Part H -- What are the factors that might influence spectral clustering?</h3>
+<p>Based on the parts above, we have found out that spectral clustering can be used for that data set when the data points form two crescents. Then, we are going to generate different data sets by using <code>make_moons</code> to check whether spectral clustering will be good at separating different data set with two half-moon clusters.</p>
+<p>Recall that the data set we generated at the beginning used <code>n</code> equals <code>200</code> and <code>noise</code> equals <code>0.05</code>. We may also try to use spectral clustering for data sets of different <code>n</code> and <code>noise</code> to test whether spectral clustering still finds the two half-moon clusters.</p>
+<h4>Data Set Comparison: Same <code>noise</code> But Different <code>n</code></h4>
+<pre><code class="language-python"># n = 200 and noise = 0.1
+# set the size of the data set
+n = 200
+# control the randomness for each time running this cell
+np.random.seed(1234)
+# generate a date set of size n with data points forming as two
+# moons and a data set of size n with integer labels of each moon
+X, y = datasets.make_moons(n_samples = n, shuffle = True, noise = 0.1, random_state = None)
+# plot a scatterplot to show the spectral clustering of data set with n = 200 and noise = 0.1
+plt.scatter(X[:, 0], X[:, 1], c = spectral_clustering(X, epsilon))
+</code></pre>
+<span class="image"><img src="images/Blog2_files/Blog2_62_1.png" alt="" width="600" height="400" /></span>
+<pre><code class="language-python"># n = 650 and noise = 0.1
+# set the size of the data set
+n = 650
+# control the randomness for each time running this cell
+np.random.seed(1234)
+# generate a date set of size n with data points forming as two
+# moons and a data set of size n with integer labels of each moon
+X, y = datasets.make_moons(n_samples = n, shuffle = True, noise = 0.1, random_state = None)
+# plot a scatterplot to show the spectral clustering of data set with n = 650 and noise = 0.1
+plt.scatter(X[:, 0], X[:, 1], c = spectral_clustering(X, epsilon))
+</code></pre>
+<span class="image"><img src="images/Blog2_files/Blog2_63_1.png" alt="" width="600" height="400" /></span>
+<pre><code class="language-python"># n = 1000 and noise = 0.1
+# set the size of the data set
+n = 1000
+# control the randomness for each time running this cell
+np.random.seed(1234)
+# generate a date set of size n with data points forming as two
+# moons and a data set of size n with integer labels of each moon
+X, y = datasets.make_moons(n_samples = n, shuffle = True, noise = 0.1, random_state = None)
+# plot a scatterplot to show the spectral clustering of data set with n = 1000 and noise = 0.1
+plt.scatter(X[:, 0], X[:, 1], c = spectral_clustering(X, epsilon))
+</code></pre>
+<span class="image"><img src="images/Blog2_files/Blog2_64_1.png" alt="" width="600" height="400" /></span>
+<p>Based on the three graphs above, we found out that spectral clustering works well for different <code>n</code>, especially for smaller <code>n</code>. Also, as <code>n</code> increases, the points shown on the graphs around the two-half moon becomes larger, but the points try to gather together in each half moon.</p>
+<h4>Data Set Comparison: Same <code>n</code> But Different <code>noise</code></h4>
+<pre><code class="language-python"># n = 600 and noise = 0.03
+# set the size of the data set
+n = 600
+# control the randomness for each time running this cell
+np.random.seed(1234)
+# generate a date set of size n with data points forming as two
+# moons and a data set of size n with integer labels of each moon
+X, y = datasets.make_moons(n_samples = n, shuffle = True, noise = 0.03, random_state = None)
+# plot a scatterplot to show the spectral clustering of data set with n = 600 and noise = 0.03
+plt.scatter(X[:, 0], X[:, 1], c = spectral_clustering(X, epsilon))
+</code></pre>
+<span class="image"><img src="images/Blog2_files/Blog2_67_1.png" alt="" width="600" height="400" /></span>
+<pre><code class="language-python"># n = 600 and noise = 0.15
+# set the size of the data set
+n = 600
+# control the randomness for each time running this cell
+np.random.seed(1234)
+# generate a date set of size n with data points forming as two
+# moons and a data set of size n with integer labels of each moon
+X, y = datasets.make_moons(n_samples = n, shuffle = True, noise = 0.15, random_state = None)
+# plot a scatterplot to show the spectral clustering of data set with n = 600 and noise = 0.15
+plt.scatter(X[:, 0], X[:, 1], c = spectral_clustering(X, epsilon))
+</code></pre>
+<span class="image"><img src="images/Blog2_files/Blog2_68_1.png" alt="" width="600" height="400" /></span>
+<pre><code class="language-python"># n = 600 and noise = 0.3
+# set the size of the data set
+n = 600
+# control the randomness for each time running this cell
+np.random.seed(1234)
+# generate a date set of size n with data points forming as two
+# moons and a data set of size n with integer labels of each moon
+X, y = datasets.make_moons(n_samples = n, shuffle = True, noise = 0.3, random_state = None)
+# plot a scatterplot to show the spectral clustering of data set with n = 600 and noise = 0.3
+plt.scatter(X[:, 0], X[:, 1], c = spectral_clustering(X, epsilon))
+</code></pre>
+<span class="image"><img src="images/Blog2_files/Blog2_69_1.png" alt="" width="600" height="400" /></span>
+<p>Based on the three graphs above, we found out that spectral clustering has a lower ability to separate the data set as <code>noise</code> increases. This is because the points try to spread out from the center for each cluster and make the points in two clusters be very close, resulting the spectral clustering does not recognize which point is in which cluster.</p>
+
+<h3>Part I -- Does our spectral clustering work well for other data set?</h3>
+<p>Now let's try our spectral clustering function on another data set -- the bull's eye!</p>
+<pre><code class="language-python"># set the size of the data set
+n = 1000
+# generate a date set of size n with data points forming as two concentric 
+# circles and a data set of size n with integer labels of each moon
+X, y = datasets.make_circles(n_samples=n, shuffle=True, noise=0.05, random_state=None, factor = 0.4)
+# plot a scatterplot to show the data set
+plt.scatter(X[:,0], X[:,1])
+</code></pre>
+<span class="image"><img src="images/Blog2_files/Blog2_72_1.png" alt="" width="600" height="400" /></span>
+<p>There are two concentric circles in the above graph. Let's try k-means for this data set.</p>
+<pre><code class="language-python"># compute k-means clustering with two clusters
+km = KMeans(n_clusters = 2)
+# fit the data points in k-means
+km.fit(X)
+# plot a scatterplot based on the Euclidean coordinates of the
+# data points with a group color, predicting by the k-means
+plt.scatter(X[:,0], X[:,1], c = km.predict(X))
+</code></pre>
+<span class="image"><img src="images/Blog2_files/Blog2_74_1.png" alt="" width="600" height="400" /></span>
+<p>As before k-means does not do well here at all. But spectral clustering might do well here.
+Let's try for some values of epsilon for our function spectral_clustering(X, epsilon).</p>
+<pre><code class="language-python"># plot a scatterplot to show the spectral clustering with epsilon = 0.22
+plt.scatter(X[:, 0], X[:, 1], c = spectral_clustering(X, epsilon = 0.22))
+</code></pre>
+<span class="image"><img src="images/Blog2_files/Blog2_76_1.png" alt="" width="600" height="400" /></span>
+<pre><code class="language-python"># plot a scatterplot to show the spectral clustering with epsilon = 0.4
+plt.scatter(X[:, 0], X[:, 1], c = spectral_clustering(X, epsilon = 0.4))
+</code></pre>
+<span class="image"><img src="images/Blog2_files/Blog2_77_1.png" alt="" width="600" height="400" /></span>
+<pre><code class="language-python"># plot a scatterplot to show the spectral clustering with epsilon = 0.54
+plt.scatter(X[:, 0], X[:, 1], c = spectral_clustering(X, epsilon = 0.54))
+</code></pre>
+<span class="image"><img src="images/Blog2_files/Blog2_78_1.png" alt="" width="600" height="400" /></span>
+<p>Based on the above graphs, we may conclude that the spectral clustering will work when the epsilon is roughly between 0.22 and 0.54. Also, we may find out that spectral clustering will also work for data sets that look like two concentric circles.</p>
+<h3>Part J -- The end.</h3>
+<p>Great! That's all for our brief tutorial on spectral clustering.</p>
+
+							
+			
+			
+					</section>
+					</div>
+
+				<!-- Footer -->
+					<footer id="footer">
+						<section>
+							<h2>Techniques</h2>
+							<p> Python &bull; NumPy &bull; Spectral Clustering &bull; K-Means &bull; Linear Algebra &bull; Similarity Matrix &bull; Classification
+							</p>
+							<ul class="actions">
+								<li><a href="index.html" class="button">Go To Main</a></li>
+							</ul>
+						</section>
+						<section>
+							<h2>Contact</h2>
+							<dl class="alt">
+								<dt>Address</dt>
+								<dd>Chicago, IL &bull; Los Angeles, CA</dd>
+								<dt>Phone</dt>
+								<dd>(424) 407-6619</dd>
+								<dt>Email</dt>
+								<dd><a href="#">jingxuanzhang@uchicago.edu</a></dd>
+							</dl>
+							<ul class="icons">
+								<li><a href="https://www.linkedin.com/in/stancyzhang/" class="icon brands fa-linkedin alt"><span class="label">LinkedIn</span></a></li>
+								<li><a href="https://github.com/StancyZhang" class="icon brands fa-github alt"><span class="label">GitHub</span></a></li>
+							</ul>
+						</section>
+						<p class="copyright">&copy; Stancy Portfolio. Design: <a href="https://html5up.net">HTML5 UP</a>.</p>
+					</footer>
+
+			</div>
+
+		<!-- Scripts -->
+			<script src="assets/js/jquery.min.js"></script>
+			<script src="assets/js/jquery.scrollex.min.js"></script>
+			<script src="assets/js/jquery.scrolly.min.js"></script>
+			<script src="assets/js/browser.min.js"></script>
+			<script src="assets/js/breakpoints.min.js"></script>
+			<script src="assets/js/util.js"></script>
+			<script src="assets/js/main.js"></script>
+
+	</body>
+</html>

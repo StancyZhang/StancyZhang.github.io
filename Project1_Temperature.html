@@ -1,0 +1,1501 @@
+<!DOCTYPE HTML>
+<!--
+	Stellar by HTML5 UP
+	html5up.net | @ajlkn
+	Free for personal and commercial use under the CCA 3.0 license (html5up.net/license)
+-->
+<html>
+	<head>
+		<title>Stancy Zhang</title>
+		<script type="text/x-mathjax-config">
+			MathJax.Hub.Config({tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}});
+		  </script>
+		  <script type="text/javascript"
+			src="http://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
+		  </script>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
+		<link rel="stylesheet" href="assets/css/main.css" />
+		<noscript><link rel="stylesheet" href="assets/css/noscript.css" /></noscript>
+	</head>
+	<body class="is-preload">
+
+		<!-- Wrapper -->
+			<div id="wrapper">
+
+				<!-- Header -->
+					<header id="header">
+						<h1>Unveiling Climate Trends</h1>
+						<h3>A comprehensive analysis using NOCC Climate Data to understand temperature shifts and climate variability across various geographical locations over time.</h3>
+						<p>March 2021</p>
+						<a href="index.html" class="button">Go To Main</a>
+					</header>
+
+				<!-- Main -->
+					<div id="main">
+
+						<!-- Content -->
+							<section id="content" class="main">
+								<h2>Goal</h2>
+								<p>In this blog post, I will create some intriguing and colorful data graphics based on the NOAA climate data, including interactive graphs, boxplots, and scatterplots.</p>
+								<iframe src="includes/Brazil_Yearly_Temperature_Increase.html" width="100%" height="800"></iframe>
+								<h2>§1 Create a Database</h2>
+								<h3>Import the Data</h3>
+								<p>First of all, I want to import three data sets that I am going to use for this blog post. Those three data sets are now in separate csv files, which are called "temps.csv", "station-metadata.csv", and "countries.csv". Pandas package is a powerful package for analyzing dataframes in Python that I want to use when importing those csv files.</p>
+								<pre><code># import pandas package
+import pandas as pd
+# import temps.csv into a DataFrame called temperature_data
+temperature_data = pd.read_csv("temps.csv")
+# import station-metadata.csv into a DataFrame called station_data
+station_data = pd.read_csv("station-metadata.csv")
+# import countries.csv into a DataFrame called country_data
+country_data = pd.read_csv("countries.csv")</code></pre>
+							
+								<p>After importing the data sets, I want to check the first five rows of each DataFrame to be familiar with the information in it, especially paying attention to the column names. I am going to use df.head( ) to check the first five rows of each of the DataFrame.</p>
+								<pre><code>temperature_data.head()</code></pre>
+								<div class="table-wrapper">
+									<style scoped>
+										.dataframe tbody tr th:only-of-type {
+											vertical-align: middle;
+										}
+									
+										.dataframe tbody tr th {
+											vertical-align: top;
+										}
+									
+										.dataframe thead th {
+											text-align: right;
+										}
+									</style>
+									<table border="1" class="dataframe alt">
+									  <thead>
+										<tr style="text-align: right;">
+										  <th></th>
+										  <th>ID</th>
+										  <th>Year</th>
+										  <th>VALUE1</th>
+										  <th>VALUE2</th>
+										  <th>VALUE3</th>
+										  <th>VALUE4</th>
+										  <th>VALUE5</th>
+										  <th>VALUE6</th>
+										  <th>VALUE7</th>
+										  <th>VALUE8</th>
+										  <th>VALUE9</th>
+										  <th>VALUE10</th>
+										  <th>VALUE11</th>
+										  <th>VALUE12</th>
+										</tr>
+									  </thead>
+									  <tbody>
+										<tr>
+										  <th>0</th>
+										  <td>ACW00011604</td>
+										  <td>1961</td>
+										  <td>-89.0</td>
+										  <td>236.0</td>
+										  <td>472.0</td>
+										  <td>773.0</td>
+										  <td>1128.0</td>
+										  <td>1599.0</td>
+										  <td>1570.0</td>
+										  <td>1481.0</td>
+										  <td>1413.0</td>
+										  <td>1174.0</td>
+										  <td>510.0</td>
+										  <td>-39.0</td>
+										</tr>
+										<tr>
+										  <th>1</th>
+										  <td>ACW00011604</td>
+										  <td>1962</td>
+										  <td>113.0</td>
+										  <td>85.0</td>
+										  <td>-154.0</td>
+										  <td>635.0</td>
+										  <td>908.0</td>
+										  <td>1381.0</td>
+										  <td>1510.0</td>
+										  <td>1393.0</td>
+										  <td>1163.0</td>
+										  <td>994.0</td>
+										  <td>323.0</td>
+										  <td>-126.0</td>
+										</tr>
+										<tr>
+										  <th>2</th>
+										  <td>ACW00011604</td>
+										  <td>1963</td>
+										  <td>-713.0</td>
+										  <td>-553.0</td>
+										  <td>-99.0</td>
+										  <td>541.0</td>
+										  <td>1224.0</td>
+										  <td>1627.0</td>
+										  <td>1620.0</td>
+										  <td>1596.0</td>
+										  <td>1332.0</td>
+										  <td>940.0</td>
+										  <td>566.0</td>
+										  <td>-108.0</td>
+										</tr>
+										<tr>
+										  <th>3</th>
+										  <td>ACW00011604</td>
+										  <td>1964</td>
+										  <td>62.0</td>
+										  <td>-85.0</td>
+										  <td>55.0</td>
+										  <td>738.0</td>
+										  <td>1219.0</td>
+										  <td>1442.0</td>
+										  <td>1506.0</td>
+										  <td>1557.0</td>
+										  <td>1221.0</td>
+										  <td>788.0</td>
+										  <td>546.0</td>
+										  <td>112.0</td>
+										</tr>
+										<tr>
+										  <th>4</th>
+										  <td>ACW00011604</td>
+										  <td>1965</td>
+										  <td>44.0</td>
+										  <td>-105.0</td>
+										  <td>38.0</td>
+										  <td>590.0</td>
+										  <td>987.0</td>
+										  <td>1500.0</td>
+										  <td>1487.0</td>
+										  <td>1477.0</td>
+										  <td>1377.0</td>
+										  <td>974.0</td>
+										  <td>31.0</td>
+										  <td>-178.0</td>
+										</tr>
+									  </tbody>
+									</table>
+								</div>
+								<p>Based on the partial DataFrame above, I notice that there are several columns inside temperature_data,
+								</br>ID: the ID number of a station in the world
+								</br>year: the year that a measurement was done
+								</br>VALUE1 to VALUE12: the temperature of each month</p>
+								<pre><code>station_data.head()</code></pre>
+								<div class="table-wrapper">
+									<style scoped>
+										.dataframe tbody tr th:only-of-type {
+											vertical-align: middle;
+										}
+									
+										.dataframe tbody tr th {
+											vertical-align: top;
+										}
+									
+										.dataframe thead th {
+											text-align: right;
+										}
+									</style>
+									<table border="1" class="dataframe alt">
+										<thead>
+										<tr style="text-align: right;">
+											<th></th>
+											<th>ID</th>
+											<th>LATITUDE</th>
+											<th>LONGITUDE</th>
+											<th>STNELEV</th>
+											<th>NAME</th>
+										</tr>
+										</thead>
+										<tbody>
+										<tr>
+											<th>0</th>
+											<td>ACW00011604</td>
+											<td>57.7667</td>
+											<td>11.8667</td>
+											<td>18.0</td>
+											<td>SAVE</td>
+										</tr>
+										<tr>
+											<th>1</th>
+											<td>AE000041196</td>
+											<td>25.3330</td>
+											<td>55.5170</td>
+											<td>34.0</td>
+											<td>SHARJAH_INTER_AIRP</td>
+										</tr>
+										<tr>
+											<th>2</th>
+											<td>AEM00041184</td>
+											<td>25.6170</td>
+											<td>55.9330</td>
+											<td>31.0</td>
+											<td>RAS_AL_KHAIMAH_INTE</td>
+										</tr>
+										<tr>
+											<th>3</th>
+											<td>AEM00041194</td>
+											<td>25.2550</td>
+											<td>55.3640</td>
+											<td>10.4</td>
+											<td>DUBAI_INTL</td>
+										</tr>
+										<tr>
+											<th>4</th>
+											<td>AEM00041216</td>
+											<td>24.4300</td>
+											<td>54.4700</td>
+											<td>3.0</td>
+											<td>ABU_DHABI_BATEEN_AIR</td>
+										</tr>
+										</tbody>
+									</table>
+								</div>
+								<h3>Add DataFrame to the Database</h3>
+								<p>I have all the data sets after importing them from the csv files. Then, I want to prepare them before adding them to a database.</p>
+								<p>Firstly, I want to modify temperature_data mainly by stacking and renaming since the temperature values of each month are in separate columns, but I want to have a column of each month with the temperature value.</p>
+								<p>Next, I want to also make connections between DataFrames so that at least there is one similar column between two DataFrames. It is obvious that both temperature_data and station_data have a column called "ID". Thus, "ID" column can be used as a connection between temperature_data and station_data. Since the first two letters in the value of the "ID" column in temperature_data contains the value of "FIPS 10-4" in country_data, I want to add a new "FIPS_code" column in temperature_data, similar information as "FIPS 10-4" in country_data but different column name, based on the first two letters of each value in "ID" column in temperature_data in order to build a connection between temperature_data and country_data.</p>
+								<p>In order to get the updated temperature_data I want, I want to define a function, called prepare_df, below.</p>
+								<pre><code>def prepare_df(df):
+	"""
+	Prepare and update the DataFrame to have the proper the information with a few steps about stacking and renaming.
+
+	Parameter
+	----------
+	df: the input DataFrame
+
+	Return 
+	----------
+	df: a DataFrame that is updated and fully-prepared
+	"""
+
+	df = df.set_index(keys=["ID", "Year"]) # convert redundant columns into stack into a multi-index for the DataFrame
+	df = df.stack() # stack all of the data values on top of each other
+	df = df.reset_index() # get the ID, Year, and Name columns back and name the new columns as "level_2" and 0
+	df = df.rename(columns = {"level_2"  : "Month" , 0 : "Temp"}) # rename the new columns
+	df["Month"] = df["Month"].str[5:].astype(int) # update "Month" column with integer values
+	df["Temp"]  = df["Temp"] / 100 # get units of degrees Celsius for the "Temp" column
+	df["FIPS_code"] = df["ID"].str[0:2] # add a new "FIPS_code" column based on the first two letters of "ID"
+
+	return(df)</code></pre>
+								<p>Then, it is ready to use the prepare_df function and add all of the three DataFrames into a database. In order to create a new database, I want to import sqlite3 module that involves several uses of databases.</p>
+								<pre><code>import sqlite3
+conn = sqlite3.connect("tables.db") # create a database in current directory called "tables.db"</code></pre>
+								<p>Now, there is a "tables.db" file in the current directory, waiting to be added those three DataFrames above. Next, I want to use "chunksize" in pdf.read_csv to return an iterator with parts of the data size equal to the value of the chunksize when querying it. By using a for loop and df.to_sql( ), each piece of "temps.csv" after using the prepare_df function will be added into the tables.db, having the name of "temperatures", without repetitions by using "if_exists" inside df.to_sql( ).</p>
+								<pre><code>df_iter = pd.read_csv("temps.csv", chunksize = 100000)
+for df in df_iter:
+	df = prepare_df(df)
+	df.to_sql("temperatures", conn, if_exists = "append", index = False)</code></pre>
+								<p>By using the df.to_sql( ) again, station_data can also be added into "tables.db" with the name of "stations". Since station_data is small, I directly use df.to_sql( ) to add station_data, instead of adding it by chunks.</p>
+								<pre><code>station_data.to_sql("stations", conn, if_exists = "replace", index = False)</code></pre>
+								<p>Before adding country_data, I want to rename the column of "FIPS 10-4" to "FIPS_code", "ISO 3166" to "ISO_code", and the column of "Name" to "Country" to make the process of adding the dataframe into a database easier and make the later plotting easier.</p>
+								<pre><code>country_data = country_data.rename({"FIPS 10-4": "FIPS_code", "ISO 3166": "ISO_code", "Name" : "Country"}, axis = 1) # rename the columns
+									country_data.head()</code></pre>
+								<div class="table-wrapper">
+									<style scoped>
+										.dataframe tbody tr th:only-of-type {
+											vertical-align: middle;
+										}
+									
+										.dataframe tbody tr th {
+											vertical-align: top;
+										}
+									
+										.dataframe thead th {
+											text-align: right;
+										}
+									</style>
+									<table border="1" class="dataframe alt">
+										<thead>
+										<tr style="text-align: right;">
+											<th></th>
+											<th>FIPS_code</th>
+											<th>ISO_code</th>
+											<th>Country</th>
+										</tr>
+										</thead>
+										<tbody>
+										<tr>
+											<th>0</th>
+											<td>AF</td>
+											<td>AF</td>
+											<td>Afghanistan</td>
+										</tr>
+										<tr>
+											<th>1</th>
+											<td>AX</td>
+											<td>-</td>
+											<td>Akrotiri</td>
+										</tr>
+										<tr>
+											<th>2</th>
+											<td>AL</td>
+											<td>AL</td>
+											<td>Albania</td>
+										</tr>
+										<tr>
+											<th>3</th>
+											<td>AG</td>
+											<td>DZ</td>
+											<td>Algeria</td>
+										</tr>
+										<tr>
+											<th>4</th>
+											<td>AQ</td>
+											<td>AS</td>
+											<td>American Samoa</td>
+										</tr>
+										</tbody>
+									</table>
+								</div>
+								<p>After having the updated country_data I want, I am also going to directly add the small country_data with the name of "countries" into "tables.db" by using df.to_sql( ).</p>
+								<pre><code>country_data.to_sql("countries", conn, if_exists = "replace", index = False)</code></pre>
+								<p>Finally, I have finished adding those three DataFrames into "tables.db". I can check whether the database, "tables.db", contains three DataFrames below by using cursor to execute SQL commands.</p>
+								<pre><code>cursor = conn.cursor() # interact with the database
+cursor.execute("SELECT name FROM sqlite_master WHERE type='table'") # execute a SQL command about showing the entries in the name column of the sqlite_master table such that the entry in the type column of sqlite_master is equal to table
+print(cursor.fetchall()) # print the returned list of all the items by the query</code></pre>
+								<pre>[('temperatures',), ('stations',), ('countries',)]</pre>
+								<p>Based on the above output, we can see that there are exactly three tables called "temperatures", "stations", and "countries". Next, I want to use another SQL command to show the column names of each table.</p>
+								<pre><code># execute a SQL command with a for loop for cursor.fetchall() to get the column names in all of the tables in the database
+cursor.execute("SELECT sql FROM sqlite_master WHERE type='table';")
+for result in cursor.fetchall():
+	print(result[0])</code></pre>
+								<pre>CREATE TABLE "temperatures" (
+"ID" TEXT,
+	"Year" INTEGER,
+	"Month" INTEGER,
+	"Temp" REAL,
+	"FIPS_code" TEXT
+)
+CREATE TABLE "stations" (
+"ID" TEXT,
+	"LATITUDE" REAL,
+	"LONGITUDE" REAL,
+	"STNELEV" REAL,
+	"NAME" TEXT
+)
+CREATE TABLE "countries" (
+"FIPS_code" TEXT,
+	"ISO_code" TEXT,
+	"Country" TEXT
+)</pre>
+								
+
+
+
+								<p>Overall, we can find out that all of the three DataFrames with the correct columns have been successfully added into the database called "tables.db". Finally, I want to close my database connection.</p>
+								<pre><code>conn.close() # close the database connection</code></pre>
+								<h2>§2. Write a Query Function</h2>
+								<p>I want to write a query function called query_climate_database that is based on the created database, "tables.db", above. Before writing the query function, I want to explain the brief steps to write that functions:</p>
+								<p>1. To make the command more readable and clearer, we are going to write the command into multiple lines and make the stations table with an alias S, the temperatures table with an alias T, and the countries table with an alias C.</p>
+								<p>2. We need to make connections among the tables. Since T and C both have the "FIPS_code" column and T and S have the "ID" column, we will use a <b>LEFT JOIN</b> command to make that common column of T corresponds to the same column of C and use a <b>LEFT JOIN</b> command to make the "ID" column of T corresponds to the same column of S.</p>
+								<p>3. At the beginning of the command, we need to use a <b>SELECT</b> to choose the columns we want for the returned DataFrame. At the end of the command, we need to use a <b>WHERE</b> to add filtering conditions for the data.</p>
+								<p>According to the steps above, I am going to write the query_climate_database function with an example of calling the function below.</p>
+								<pre><code>def query_climate_database(country, year_begin, year_end, month):
+	"""
+	Create a Pandas DataFrame that contains the average temperature at each station between the input year interval with the station's name in the input country and with the station's latitude and longitude.
+
+	Parameters
+	----------
+	country: the input string about the name of a country for which should be returned
+	year_begin: an input integer about the earliest year of the time interval for which should be returned
+	year_end: an input integer about the latest year of the time interval for which should be returned
+	month: an input integer about the month of the year for which should be returned
+
+	Return 
+	----------
+	df: a Pandas DataFrame has the temperature readings with the columns of the station name, station's latitude, station's longitude, country name, year, month, and temperature
+	"""
+
+	conn = sqlite3.connect("tables.db") # open the database connection
+
+	# S is the abbreviation of stations in tables.db
+	# C is the abbreviation of countries in tables.db
+	# T is the abbreviation of temperatures in tables.db
+	# S.name, S.latitude, S.longitude, C.country, T.year, T.month, T.temp are the columns that the returned dataframe should contain
+	# left join C with the "FIPS_code" column in both T and C and left join S with the "ID" column in both T and S to make connections among three tables
+	# make conditions based on the input parameters about the value of "Country" column in C, "Year" in T, and "Month" in T
+	cmd = \
+	"""
+	SELECT S.name, S.latitude, S.longitude, C.country, T.year, T.month, T.temp
+	FROM temperatures T
+	LEFT JOIN countries C on T."fips_code" = C."fips_code"
+	LEFT JOIN stations S on T.id = S.id
+	WHERE C.country == ?
+	AND T.year BETWEEN ? AND ?
+	AND T.month == ?
+	"""
+
+	# add the values of the parameters by params and make connections between the command cmd and the database connection conn by using pd.read_sql_query( )
+	df = pd.read_sql_query(cmd, conn, params = [country, year_begin, year_end, month])
+
+	conn.close() # close the database connection
+
+	return df</code></pre>
+								<pre><code>query_climate_database(country = "India",
+year_begin = 1980,
+year_end = 2020,
+month = 1)</code></pre>
+								<div class="table-wrapper">
+									<style scoped>
+										.dataframe tbody tr th:only-of-type {
+											vertical-align: middle;
+										}
+									
+										.dataframe tbody tr th {
+											vertical-align: top;
+										}
+									
+										.dataframe thead th {
+											text-align: right;
+										}
+									</style>
+									<table border="1" class="dataframe alt">
+									<thead>
+										<tr style="text-align: right;">
+										<th></th>
+										<th>NAME</th>
+										<th>LATITUDE</th>
+										<th>LONGITUDE</th>
+										<th>Country</th>
+										<th>Year</th>
+										<th>Month</th>
+										<th>Temp</th>
+										</tr>
+									</thead>
+									<tbody>
+										<tr>
+										<th>0</th>
+										<td>PBO_ANANTAPUR</td>
+										<td>14.583</td>
+										<td>77.633</td>
+										<td>India</td>
+										<td>1980</td>
+										<td>1</td>
+										<td>23.48</td>
+										</tr>
+										<tr>
+										<th>1</th>
+										<td>PBO_ANANTAPUR</td>
+										<td>14.583</td>
+										<td>77.633</td>
+										<td>India</td>
+										<td>1981</td>
+										<td>1</td>
+										<td>24.57</td>
+										</tr>
+										<tr>
+										<th>2</th>
+										<td>PBO_ANANTAPUR</td>
+										<td>14.583</td>
+										<td>77.633</td>
+										<td>India</td>
+										<td>1982</td>
+										<td>1</td>
+										<td>24.19</td>
+										</tr>
+										<tr>
+										<th>3</th>
+										<td>PBO_ANANTAPUR</td>
+										<td>14.583</td>
+										<td>77.633</td>
+										<td>India</td>
+										<td>1983</td>
+										<td>1</td>
+										<td>23.51</td>
+										</tr>
+										<tr>
+										<th>4</th>
+										<td>PBO_ANANTAPUR</td>
+										<td>14.583</td>
+										<td>77.633</td>
+										<td>India</td>
+										<td>1984</td>
+										<td>1</td>
+										<td>24.81</td>
+										</tr>
+										<tr>
+										<th>...</th>
+										<td>...</td>
+										<td>...</td>
+										<td>...</td>
+										<td>...</td>
+										<td>...</td>
+										<td>...</td>
+										<td>...</td>
+										</tr>
+										<tr>
+										<th>3147</th>
+										<td>DARJEELING</td>
+										<td>27.050</td>
+										<td>88.270</td>
+										<td>India</td>
+										<td>1983</td>
+										<td>1</td>
+										<td>5.10</td>
+										</tr>
+										<tr>
+										<th>3148</th>
+										<td>DARJEELING</td>
+										<td>27.050</td>
+										<td>88.270</td>
+										<td>India</td>
+										<td>1986</td>
+										<td>1</td>
+										<td>6.90</td>
+										</tr>
+										<tr>
+										<th>3149</th>
+										<td>DARJEELING</td>
+										<td>27.050</td>
+										<td>88.270</td>
+										<td>India</td>
+										<td>1994</td>
+										<td>1</td>
+										<td>8.10</td>
+										</tr>
+										<tr>
+										<th>3150</th>
+										<td>DARJEELING</td>
+										<td>27.050</td>
+										<td>88.270</td>
+										<td>India</td>
+										<td>1995</td>
+										<td>1</td>
+										<td>5.60</td>
+										</tr>
+										<tr>
+										<th>3151</th>
+										<td>DARJEELING</td>
+										<td>27.050</td>
+										<td>88.270</td>
+										<td>India</td>
+										<td>1997</td>
+										<td>1</td>
+										<td>5.70</td>
+										</tr>
+									</tbody>
+									</table>
+									<p>3152 rows × 7 columns</p>
+								</div>
+								<p>The output by calling the query_climate_database function looks correct, containing the columns we want in a Pandas DataFrame.</p>
+						
+								<h2>§3. Write a Geographic Scatter Function for Yearly Temperature Increases</h2>
+								<p>In this section, I am going to write a geographic scatter function, called temperature_coefficient_plot, to make visualizations based on the created database in section one and the query_climate_database function in section two to answer the following question:</p>
+								<h5>How does the average yearly change in temperature vary within a given country? </h5>
+								<p>I want to import the packages I am going to use in the temperature_coefficient_plot function first.</p>
+								<pre><code># import the packages I will use in this part
+from sklearn.linear_model import LinearRegression # find the average annually change
+from plotly import express as px # plot interactive graphs
+import calendar # transform number into words about month
+
+# import the packges for saving the interactive output file from the plotly tutorial
+import plotly.io as pio
+import plotly.graph_objects as go
+from plotly.io import write_html # save the output interactive graphs by plotly as html files</code></pre>
+								<p>Since I want to find the average yearly change in temperature, I can write a function by using the <b>Linear Regression Model</b>; by fitting each pair of data of "Year" and "Temp" of a station into a new linear regression model with the help of df.groupby( ).apply( ), I can find the average yearly change in temperature by computing the first coefficient of a linear regression model output.</p>
+								<pre><code>def coef(data_group):
+"""
+Compute the first coefficient of a linear regression model by using "Year" as the predictor variable and "Temp" as the target variable.
+
+Parameter
+----------
+data_group: a pair of data consisting of the values of "Year" and "Temp"
+
+Return 
+----------
+LR.coef_[0]: the first coefficient of a linear regression model
+"""
+
+x = data_group[["Year"]] # predictor variable
+y = data_group["Temp"] # target variable
+LR = LinearRegression() # a new linear regression model
+LR.fit(x, y) # fit the linear regression model
+return LR.coef_[0] # get the only first coefficient of the linear regression model</code></pre>
+								<p>Noticing that the input value of the month and the values of the "Month" column in the output DataFrame by the query_climate_database function are in integers. I want to automatically transform those integers, representing months, into words for the title of my interactive graph. Thus, I want to use the calendar module to transform. I am going to use the examples below to show how to use calendar package to transform.</p>
+								<pre><code># transform integer, 1, to January
+calendar.month_name[1]</code></pre>
+								<pre>'January'</pre>
+								<pre><code># transform integer, 5, to May
+calendar.month_name[5]</code></pre>
+								<pre>'May'</pre>
+								<p>Then, I am ready to write the temperature_coefficient_plot function below.</p>
+								<pre><code>def temperature_coefficient_plot(country, year_begin, year_end, month, min_obs, **kwargs):
+	"""
+	Create an interactive geographic scatterplot. By using Plotly Express, there should be a point for each station on the scatterplot, where color of the point reflects an estimate of the yearly change in temperature during the specified month and time period at that station.
+
+	Parameters
+	----------
+	country: the input string about the name of a country
+	year_begin: an input integer about the earliest year of the time interval
+	year_end: an input integer about the latest year of the time interval
+	month: an input integer about the month of the year
+	min_obs: the minimum required number of years of data for any given station
+	**kwargs: additional keyword arguments passed to px.scatter_mapbox() which can be used to control the colormap used, the mapbox style, etc
+
+	Return 
+	----------
+	fig: an interactive geographic scatterplot by Plotly Express with a point for each station
+	"""
+
+	df = query_climate_database(country, year_begin, year_end, month) # use the query_climate_database function created in section two
+
+	eligible_stations = df.groupby(["NAME"])["Year"].transform(len) # use df.groupby().transform() to find the number of years each station has done temperature measurements in the specified month
+	df = df[eligible_stations >= min_obs] # keep data for stations with at least min_obs years worth of data in the specified month and filter out the others
+
+	df_update = df.groupby(["NAME", "LATITUDE", "LONGITUDE"]).apply(coef) # find the estimate of the yearly change in temperature
+	df_update = df_update.reset_index()
+	df_update = df_update.rename({0: "Estimated Yearly Increase (°C)"}, axis = 1) # rename columns
+	df_update["Estimated Yearly Increase (°C)"] = df_update["Estimated Yearly Increase (°C)"].round(decimals = 4) # round values of estimate of the yearly change in temperature
+
+	# create an interactive geographic scatterplot by Plotly Express with the information of "LATITUDE", "LONGITUDE", "NAME", and "Estimated Yearly Increase (°C)" in estimates
+	fig = px.scatter_mapbox(df_update, 
+							lat = "LATITUDE",
+							lon = "LONGITUDE",
+							hover_name = "NAME",
+							color = "Estimated Yearly Increase (°C)",
+							color_continuous_midpoint = 0,
+							title = "Estimates of yearly increase in temperature in <br>" + calendar.month_name[month] + f" for stations in {country} years {year_begin} - {year_end}",
+							**kwargs)
+	# add title for the colorbar
+	fig.update_layout(coloraxis_colorbar = dict(title = "Estimated Yearly <br>Increase (°C)"))
+
+	return fig</code></pre>
+									<pre><code>color_map = px.colors.diverging.RdGy_r # choose a colormap
+
+fig = temperature_coefficient_plot("India", 1980, 2020, 1, 
+					min_obs = 10,
+					zoom = 2,
+					mapbox_style="carto-positron",
+					color_continuous_scale=color_map)
+
+fig.show() # show the figure
+write_html(fig, "India_Yearly_Temperature_Increase.html") # save the output in a html file</code></pre>
+					<iframe src="includes/India_Yearly_Temperature_Increase.html" width="100%" height="800"></iframe>
+					<p>Thus, we have successfully created an interactive geographic scatterplot for stations in India in January from 1980 to 2020. Based on the points on the graph, there are more light red points than grey points, especially for the stations near the Indian Ocean. From the colorbar, we can see that there are many stations that have some yearly increases in temperature in January in India from 1980 to 2020. There are also some stations, which are mostly located in the middle of India, experience a negative estimated yearly increase. There are even a few very dark points, such as the LUDHIANA station. All of these points show that the temperature increases per year from 1980 to 2020, which may be the negative effect of global warming.</p>
+					<p>Besides, we can also try to call the temperature_coefficient_plot function with different inputs and different colormap, shown below.</p>
+					
+					<pre><code>color_map = px.colors.diverging.PuOr # choose a colormap
+
+fig = temperature_coefficient_plot("Brazil", 1980, 2000, 7, 
+					min_obs = 10,
+					zoom = 2,
+					mapbox_style="carto-positron",
+					color_continuous_scale=color_map)
+
+fig.show() # show the figure
+write_html(fig, "Brazil_Yearly_Temperature_Increase.html") # save the output in a html file</code></pre>
+					<iframe src="includes/Brazil_Yearly_Temperature_Increase.html" width="100%" height="800"></iframe>
+					<p>Similarly, we can easily observe that there are many colorful points shown on the interactive geographic scatterplot about the stations in Brazil in July from 1980 to 2020. The purple points shown on the plot reveal the yearly increase in temperature. And there are also few points in very dark purple, which represent the large increase in estimated yearly temperature. Similarly, most of the dark purple points are near the Atlantic Ocean.</p>
+					<p>Overall, we use the temperature_coefficient_plot function and found out that most of the stations in different countries are likely to experience a yearly increase in temperature in these years. The stations that are more close to the ocean are more likely to have a greater yearly increase in temperature. It is possible that global warming is the main factor that causes such an increase in temperature per year globally.</p>	
+					<h2>§4. Create Two More Interesting Figures</h2>
+					<p>In this section, I want to use Plotly Express to create another two interesting interactive figures for this section to address two more questions, respectively.</p>
+					<h3>First Question With Box Plots</h3>
+					<p>The first question is</p>
+					<h5>How does the average temperature vary between two given countries in each month of a specified year interval? </h5>
+					<p>In order to answer this question, I want to make a comparison of the average temperature of all stations in two countries in each month in a given year interval by making a box plot. By using the box plot, I will be able to get many numerical results, such as the mean values and the max values of the average temperatures from all the stations in a country.</p>
+					<pre><code>def query_climate_two_countries(country1, country2, year_begin, year_end):
+	"""
+	Create a Pandas DataFrame that contains the average temperature at each station in a specified year interval in two input countries.
+
+	Parameters
+	----------
+	country1: the input string about the name of the first country for which should be returned
+	country2: the input string about the name of the second country for which should be returned
+	year_begin: an input integer about the earliest year of the time interval
+	year_end: an input integer about the latest year of the time interval
+
+	Return 
+	----------
+	df: a Pandas DataFrame contains the names of the stations, the names of the countries, year, month, and the temperature
+	"""
+
+	conn = sqlite3.connect("tables.db") # open the database connection
+
+	# S is the abbreviation of stations in tables.db
+	# C is the abbreviation of countries in tables.db
+	# T is the abbreviation of temperatures in tables.db
+	# S.name, C.country, T.year, T.month, T.temp are the columns that the returned dataframe should contain
+	# left join C with the "FIPS_code" column in both T and C and left join S with the "ID" column in both T and S to make connections among three tables
+	# make conditions based on the input parameters about the value of "Country" column in C and the value of "Year" in T
+	cmd = \
+	"""
+	SELECT S.name, C.country, T.year, T.month, T.temp
+	FROM temperatures T
+	LEFT JOIN countries C on T."fips_code" = C."fips_code"
+	LEFT JOIN stations S on T.id = S.id
+	WHERE (C.country == ? OR C.country == ?)
+	AND T.year BETWEEN ? AND ?
+	"""
+
+	# add the values of the parameters by params and make connections between the command cmd and the database connection conn by using pd.read_sql_query( )
+	df = pd.read_sql_query(cmd, conn, params = [country1, country2, year_begin, year_end])
+
+	conn.close() # close the database connection
+
+	return df</code></pre>
+					<pre><code>query_climate_two_countries("Kenya", "Iceland", 2000, 2020)</code></pre>
+					<div class="table-wrapper">
+						<style scoped>
+							.dataframe tbody tr th:only-of-type {
+								vertical-align: middle;
+							}
+						
+							.dataframe tbody tr th {
+								vertical-align: top;
+							}
+						
+							.dataframe thead th {
+								text-align: right;
+							}
+						</style>
+						<table border="1" class="dataframe alt">
+						  <thead>
+							<tr style="text-align: right;">
+							  <th></th>
+							  <th>NAME</th>
+							  <th>Country</th>
+							  <th>Year</th>
+							  <th>Month</th>
+							  <th>Temp</th>
+							</tr>
+						  </thead>
+						  <tbody>
+							<tr>
+							  <th>0</th>
+							  <td>GUFUSKALAR</td>
+							  <td>Iceland</td>
+							  <td>2000</td>
+							  <td>1</td>
+							  <td>1.96</td>
+							</tr>
+							<tr>
+							  <th>1</th>
+							  <td>GUFUSKALAR</td>
+							  <td>Iceland</td>
+							  <td>2000</td>
+							  <td>2</td>
+							  <td>1.73</td>
+							</tr>
+							<tr>
+							  <th>2</th>
+							  <td>GUFUSKALAR</td>
+							  <td>Iceland</td>
+							  <td>2000</td>
+							  <td>3</td>
+							  <td>2.81</td>
+							</tr>
+							<tr>
+							  <th>3</th>
+							  <td>GUFUSKALAR</td>
+							  <td>Iceland</td>
+							  <td>2000</td>
+							  <td>4</td>
+							  <td>1.94</td>
+							</tr>
+							<tr>
+							  <th>4</th>
+							  <td>GUFUSKALAR</td>
+							  <td>Iceland</td>
+							  <td>2000</td>
+							  <td>5</td>
+							  <td>5.51</td>
+							</tr>
+							<tr>
+							  <th>...</th>
+							  <td>...</td>
+							  <td>...</td>
+							  <td>...</td>
+							  <td>...</td>
+							  <td>...</td>
+							</tr>
+							<tr>
+							  <th>5274</th>
+							  <td>KAKAMEGA</td>
+							  <td>Kenya</td>
+							  <td>2004</td>
+							  <td>7</td>
+							  <td>19.80</td>
+							</tr>
+							<tr>
+							  <th>5275</th>
+							  <td>KAKAMEGA</td>
+							  <td>Kenya</td>
+							  <td>2004</td>
+							  <td>8</td>
+							  <td>20.65</td>
+							</tr>
+							<tr>
+							  <th>5276</th>
+							  <td>KAKAMEGA</td>
+							  <td>Kenya</td>
+							  <td>2004</td>
+							  <td>9</td>
+							  <td>20.60</td>
+							</tr>
+							<tr>
+							  <th>5277</th>
+							  <td>KAKAMEGA</td>
+							  <td>Kenya</td>
+							  <td>2004</td>
+							  <td>11</td>
+							  <td>20.80</td>
+							</tr>
+							<tr>
+							  <th>5278</th>
+							  <td>KAKAMEGA</td>
+							  <td>Kenya</td>
+							  <td>2004</td>
+							  <td>12</td>
+							  <td>21.30</td>
+							</tr>
+						  </tbody>
+						</table>
+						<p>5279 rows × 5 columns</p>
+					</div>
+					<pre><code>query_climate_two_countries("Kenya", "Brazil", 2000, 2020)</code></pre>
+
+					<div class="table-wrapper">
+						<style scoped>
+							.dataframe tbody tr th:only-of-type {
+								vertical-align: middle;
+							}
+						
+							.dataframe tbody tr th {
+								vertical-align: top;
+							}
+						
+							.dataframe thead th {
+								text-align: right;
+							}
+						</style>
+						<table border="1" class="dataframe alt">
+						  <thead>
+							<tr style="text-align: right;">
+							  <th></th>
+							  <th>NAME</th>
+							  <th>Country</th>
+							  <th>Year</th>
+							  <th>Month</th>
+							  <th>Temp</th>
+							</tr>
+						  </thead>
+						  <tbody>
+							<tr>
+							  <th>0</th>
+							  <td>CRUZEIRO_DO_SUL</td>
+							  <td>Brazil</td>
+							  <td>2000</td>
+							  <td>1</td>
+							  <td>26.21</td>
+							</tr>
+							<tr>
+							  <th>1</th>
+							  <td>CRUZEIRO_DO_SUL</td>
+							  <td>Brazil</td>
+							  <td>2000</td>
+							  <td>2</td>
+							  <td>26.09</td>
+							</tr>
+							<tr>
+							  <th>2</th>
+							  <td>CRUZEIRO_DO_SUL</td>
+							  <td>Brazil</td>
+							  <td>2000</td>
+							  <td>3</td>
+							  <td>26.39</td>
+							</tr>
+							<tr>
+							  <th>3</th>
+							  <td>CRUZEIRO_DO_SUL</td>
+							  <td>Brazil</td>
+							  <td>2000</td>
+							  <td>4</td>
+							  <td>25.93</td>
+							</tr>
+							<tr>
+							  <th>4</th>
+							  <td>CRUZEIRO_DO_SUL</td>
+							  <td>Brazil</td>
+							  <td>2000</td>
+							  <td>5</td>
+							  <td>25.63</td>
+							</tr>
+							<tr>
+							  <th>...</th>
+							  <td>...</td>
+							  <td>...</td>
+							  <td>...</td>
+							  <td>...</td>
+							  <td>...</td>
+							</tr>
+							<tr>
+							  <th>45996</th>
+							  <td>KAKAMEGA</td>
+							  <td>Kenya</td>
+							  <td>2004</td>
+							  <td>7</td>
+							  <td>19.80</td>
+							</tr>
+							<tr>
+							  <th>45997</th>
+							  <td>KAKAMEGA</td>
+							  <td>Kenya</td>
+							  <td>2004</td>
+							  <td>8</td>
+							  <td>20.65</td>
+							</tr>
+							<tr>
+							  <th>45998</th>
+							  <td>KAKAMEGA</td>
+							  <td>Kenya</td>
+							  <td>2004</td>
+							  <td>9</td>
+							  <td>20.60</td>
+							</tr>
+							<tr>
+							  <th>45999</th>
+							  <td>KAKAMEGA</td>
+							  <td>Kenya</td>
+							  <td>2004</td>
+							  <td>11</td>
+							  <td>20.80</td>
+							</tr>
+							<tr>
+							  <th>46000</th>
+							  <td>KAKAMEGA</td>
+							  <td>Kenya</td>
+							  <td>2004</td>
+							  <td>12</td>
+							  <td>21.30</td>
+							</tr>
+						  </tbody>
+						</table>
+						<p>46001 rows × 5 columns</p>
+						</div>
+						<p>Based on the columns in the above outputs, we can have the correct dataframe we want by using the query_climate_two_countries function. Similar to section three, we also need to write a function to plot the interactive figure by using Plotly Express.</p>
+
+						<pre><code>def temperature_coefficient_box(country1, country2, year_begin, year_end, min_obs, **kwargs):
+	"""
+	Create an interactive box plot by using Plotly Express; there should be two box plots where each box plot is about the average temperature of all the stations in all 12 months of a specified year interval in each country.
+
+	Parameters
+	----------
+	country1: the input string about the name of the first country
+	country2: the input string about the name of the second country
+	year_begin: an input integer about the earliest year of the time interval
+	year_end: an input integer about the latest year of the time interval
+	min_obs: the minimum required number of years of data for any given station
+	**kwargs: additional keyword arguments passed to px.box()
+
+	Return 
+	----------
+	fig: an interactive box plot by Plotly Express consisting of a box plot for each country
+	"""
+
+	df = query_climate_two_countries(country1, country2, year_begin, year_end) # use the query_climate_two_countries function created above
+
+	eligible_stations = df.groupby(["NAME"])["Month"].transform(len) # use df.groupby().transform() to find the number of months each station has done temperature measurements
+	df = df[eligible_stations >= min_obs] # keep data for stations with at least min_obs months worth of data in the specified year and filter out the others
+
+	df_update = df.groupby(["NAME", "Country", "Month"])["Temp"].mean() # calculate the mean temperature of each station during the year interval in each month
+	df_update = df_update.reset_index()
+	df_update["Temp"] = df_update["Temp"].round(decimals = 4) # round the decimals of "Temp"
+	df_update["Month"] = df_update["Month"].apply(lambda t: calendar.month_name[t]) # convert month in integers into month in words
+
+	# make a box plot by using Plotly Express with the information of "Month", "Temp", and "Country" in df_update
+	fig = px.box(df_update,
+					x = "Month",
+					y = "Temp",
+					color = "Country",
+					hover_name = "Country",
+					hover_data = {"Month"},
+					labels = {"Temp": "Temperature (°C)"},
+					title = f"Monthly Average Temperature Comparison Between {country1} and {country2}<br> in years {year_begin} - {year_end}",
+					**kwargs)
+
+	return fig</code></pre>
+				<pre><code>pio.templates.default = "seaborn" # choose a theme
+
+# remove the outliers
+fig = temperature_coefficient_box("Kenya", "Iceland", 2000, 2020, 
+									min_obs = 5,
+									points = False)
+
+fig.show()
+write_html(fig, "Kenya_and_Iceland_Comparison.html") # save the output in a html file</code></pre>
+				<iframe src="includes/Kenya_and_Iceland_Comparison.html" width="100%" height="800"></iframe>
+				<p>The above interactive figure shows that Iceland and Kenya have very different average temperatures throughout the years 2000 to 2020 since the boxes of those two countries are at different levels. Overall, Iceland has a very lower temperature than Kenya on average.</p>
+				<pre><code>pio.templates.default = "seaborn" # choose a theme
+
+# remove the outliers
+fig = temperature_coefficient_box("Kenya", "Brazil", 2000, 2020,
+									min_obs = 5,
+									points = False)
+
+fig.show()
+write_html(fig, "Kenya_and_Brazil_Comparison.html") # save the output in a html file</code></pre>
+				<iframe src="includes/Kenya_and_Brazil_Comparison.html" width="100%" height="800"></iframe>		
+				<p>The above interactive figure shows that the average temperatures in Brazil and Kenya are similar throughout the years 2000 to 2020 since the boxes are nearly at the same levels.</p>
+				<p>The interactive figures created above are reasonable. Based on the first figure between Iceland and Kenya, since these two countries are far away from each other, the average temperatures for each month in a year are very different from each other. Differently, the second figure about Brazil and Kenya shows that the average temperatures for each month in a year are very close to each other because Brazil and Kenya are very close geographically. Overall, the interactive figures above show that how the average temperature varies between two given countries in each month of a specified year interval may depend on the locations of the two countries. If two countries are close geographically, their average temperatures in the same month of a year interval might be similar to each other. Oppositely, the average temperatures of the two countries in the same month of a year interval are likely to be different if their geographic locations are not close.</p>
+				
+				<h3>Second Question With a 3D Scatterplot</h3>
+				<p>The second question is</p>
+				<h5>How does the temperature variation vary among three given countries in the same month in several years? </h5>
+				<p>In order to answer this question, I want to make a comparison of the standard deviation of temperatures of all stations in three countries in the same month in several years by making a 3D scatterplot since the standard deviation of temperatures can be used to show the temperature variation.</p>
+				<p>Similar to the process in the previous parts, I want to first define a query function to create a relevant DataFrame for making the interactive figures.</p>
+				<pre><code>def query_climate_three_countries(country1, country2, country3, year_begin, year_end, month):
+	"""
+	Create a Pandas DataFrame that contains the average temperature at each station between the input year interval with the station's name in the input country and with the station's latitude and longitude.
+
+	Parameters
+	----------
+	country1: the input string about the name of the first country for which should be returned
+	country2: the input string about the name of the second country for which should be returned
+	country3: the input string about the name of the third country for which should be returned
+	year_begin: an input integer about the earliest year of the time interval for which should be returned
+	year_end: an input integer about the latest year of the time interval for which should be returned
+	month: an input integer about the month of the year for which should be returned
+
+	Return 
+	----------
+	df: a Pandas DataFrame has the temperature readings with the columns of the station name, station's latitude, station's longitude, names of the three countries, year, month, and temperature
+	"""
+
+	conn = sqlite3.connect("tables.db") # open the database connection
+
+	# S is the abbreviation of stations in tables.db
+	# C is the abbreviation of countries in tables.db
+	# T is the abbreviation of temperatures in tables.db
+	# S.name, S.latitude, S.longitude, C.country, T.year, T.month, T.temp are the columns that the returned dataframe should contain
+	# left join C with the "FIPS_code" column in both T and C and left join S with the "ID" column in both T and S to make connections among three tables
+	# make conditions based on the input parameters about the value of "Country" column in C, "Year" in T, and "Month" in T
+	cmd = \
+	"""
+	SELECT S.name, S.latitude, S.longitude, C.country, T.year, T.month, T.temp
+	FROM temperatures T
+	LEFT JOIN countries C on T."fips_code" = C."fips_code"
+	LEFT JOIN stations S on T.id = S.id
+	WHERE (C.country == ? OR C.country == ? OR C.country == ?)
+	AND T.year BETWEEN ? AND ?
+	AND T.month == ?
+	"""
+
+	# add the values of the parameters by params and make connections between the command cmd and the database connection conn by using pd.read_sql_query( )
+	df = pd.read_sql_query(cmd, conn, params = [country1, country2, country3, year_begin, year_end, month])
+
+	conn.close() # close the database connection
+
+	return df</code></pre>
+				<pre><code>query_climate_three_countries("Norway", "Russia", "Finland", 2000, 2020, 1)</code></pre>
+				<div class="table-wrapper">
+					<style scoped>
+						.dataframe tbody tr th:only-of-type {
+							vertical-align: middle;
+						}
+					
+						.dataframe tbody tr th {
+							vertical-align: top;
+						}
+					
+						.dataframe thead th {
+							text-align: right;
+						}
+					</style>
+					<table border="1" class="dataframe alt">
+					  <thead>
+						<tr style="text-align: right;">
+						  <th></th>
+						  <th>NAME</th>
+						  <th>LATITUDE</th>
+						  <th>LONGITUDE</th>
+						  <th>Country</th>
+						  <th>Year</th>
+						  <th>Month</th>
+						  <th>Temp</th>
+						</tr>
+					  </thead>
+					  <tbody>
+						<tr>
+						  <th>0</th>
+						  <td>HELSINKI_KAISANIEMI_AWS</td>
+						  <td>60.1667</td>
+						  <td>24.950</td>
+						  <td>Finland</td>
+						  <td>2000</td>
+						  <td>1</td>
+						  <td>-2.35</td>
+						</tr>
+						<tr>
+						  <th>1</th>
+						  <td>HELSINKI_KAISANIEMI_AWS</td>
+						  <td>60.1667</td>
+						  <td>24.950</td>
+						  <td>Finland</td>
+						  <td>2001</td>
+						  <td>1</td>
+						  <td>-1.02</td>
+						</tr>
+						<tr>
+						  <th>2</th>
+						  <td>HELSINKI_KAISANIEMI_AWS</td>
+						  <td>60.1667</td>
+						  <td>24.950</td>
+						  <td>Finland</td>
+						  <td>2002</td>
+						  <td>1</td>
+						  <td>-2.90</td>
+						</tr>
+						<tr>
+						  <th>3</th>
+						  <td>HELSINKI_KAISANIEMI_AWS</td>
+						  <td>60.1667</td>
+						  <td>24.950</td>
+						  <td>Finland</td>
+						  <td>2003</td>
+						  <td>1</td>
+						  <td>-8.49</td>
+						</tr>
+						<tr>
+						  <th>4</th>
+						  <td>HELSINKI_KAISANIEMI_AWS</td>
+						  <td>60.1667</td>
+						  <td>24.950</td>
+						  <td>Finland</td>
+						  <td>2004</td>
+						  <td>1</td>
+						  <td>-5.63</td>
+						</tr>
+						<tr>
+						  <th>...</th>
+						  <td>...</td>
+						  <td>...</td>
+						  <td>...</td>
+						  <td>...</td>
+						  <td>...</td>
+						  <td>...</td>
+						  <td>...</td>
+						</tr>
+						<tr>
+						  <th>22324</th>
+						  <td>TEGJULTJE_TERDE</td>
+						  <td>60.1670</td>
+						  <td>130.199</td>
+						  <td>Russia</td>
+						  <td>2009</td>
+						  <td>1</td>
+						  <td>-37.05</td>
+						</tr>
+						<tr>
+						  <th>22325</th>
+						  <td>TEGJULTJE_TERDE</td>
+						  <td>60.1670</td>
+						  <td>130.199</td>
+						  <td>Russia</td>
+						  <td>2010</td>
+						  <td>1</td>
+						  <td>-36.87</td>
+						</tr>
+						<tr>
+						  <th>22326</th>
+						  <td>TEGJULTJE_TERDE</td>
+						  <td>60.1670</td>
+						  <td>130.199</td>
+						  <td>Russia</td>
+						  <td>2011</td>
+						  <td>1</td>
+						  <td>-33.90</td>
+						</tr>
+						<tr>
+						  <th>22327</th>
+						  <td>TEGJULTJE_TERDE</td>
+						  <td>60.1670</td>
+						  <td>130.199</td>
+						  <td>Russia</td>
+						  <td>2012</td>
+						  <td>1</td>
+						  <td>-34.90</td>
+						</tr>
+						<tr>
+						  <th>22328</th>
+						  <td>TEGJULTJE_TERDE</td>
+						  <td>60.1670</td>
+						  <td>130.199</td>
+						  <td>Russia</td>
+						  <td>2013</td>
+						  <td>1</td>
+						  <td>-42.12</td>
+						</tr>
+					  </tbody>
+					</table>
+					<p>22329 rows × 7 columns</p>
+					</div>
+					<pre><code>query_climate_three_countries("Indonesia", "Brazil", "Colombia", 2000, 2020, 1)</code></pre>
+					<div class="table-wrapper">
+						<style scoped>
+							.dataframe tbody tr th:only-of-type {
+								vertical-align: middle;
+							}
+						
+							.dataframe tbody tr th {
+								vertical-align: top;
+							}
+						
+							.dataframe thead th {
+								text-align: right;
+							}
+						</style>
+						<table border="1" class="dataframe alt">
+						  <thead>
+							<tr style="text-align: right;">
+							  <th></th>
+							  <th>NAME</th>
+							  <th>LATITUDE</th>
+							  <th>LONGITUDE</th>
+							  <th>Country</th>
+							  <th>Year</th>
+							  <th>Month</th>
+							  <th>Temp</th>
+							</tr>
+						  </thead>
+						  <tbody>
+							<tr>
+							  <th>0</th>
+							  <td>CRUZEIRO_DO_SUL</td>
+							  <td>-7.633</td>
+							  <td>-72.667</td>
+							  <td>Brazil</td>
+							  <td>2000</td>
+							  <td>1</td>
+							  <td>26.21</td>
+							</tr>
+							<tr>
+							  <th>1</th>
+							  <td>CRUZEIRO_DO_SUL</td>
+							  <td>-7.633</td>
+							  <td>-72.667</td>
+							  <td>Brazil</td>
+							  <td>2001</td>
+							  <td>1</td>
+							  <td>26.12</td>
+							</tr>
+							<tr>
+							  <th>2</th>
+							  <td>CRUZEIRO_DO_SUL</td>
+							  <td>-7.633</td>
+							  <td>-72.667</td>
+							  <td>Brazil</td>
+							  <td>2003</td>
+							  <td>1</td>
+							  <td>26.32</td>
+							</tr>
+							<tr>
+							  <th>3</th>
+							  <td>CRUZEIRO_DO_SUL</td>
+							  <td>-7.633</td>
+							  <td>-72.667</td>
+							  <td>Brazil</td>
+							  <td>2004</td>
+							  <td>1</td>
+							  <td>26.92</td>
+							</tr>
+							<tr>
+							  <th>4</th>
+							  <td>CRUZEIRO_DO_SUL</td>
+							  <td>-7.633</td>
+							  <td>-72.667</td>
+							  <td>Brazil</td>
+							  <td>2005</td>
+							  <td>1</td>
+							  <td>26.57</td>
+							</tr>
+							<tr>
+							  <th>...</th>
+							  <td>...</td>
+							  <td>...</td>
+							  <td>...</td>
+							  <td>...</td>
+							  <td>...</td>
+							  <td>...</td>
+							  <td>...</td>
+							</tr>
+							<tr>
+							  <th>5954</th>
+							  <td>CILACAP_INDONESIA</td>
+							  <td>-7.700</td>
+							  <td>109.000</td>
+							  <td>Indonesia</td>
+							  <td>2008</td>
+							  <td>1</td>
+							  <td>27.60</td>
+							</tr>
+							<tr>
+							  <th>5955</th>
+							  <td>CILACAP_INDONESIA</td>
+							  <td>-7.700</td>
+							  <td>109.000</td>
+							  <td>Indonesia</td>
+							  <td>2013</td>
+							  <td>1</td>
+							  <td>27.80</td>
+							</tr>
+							<tr>
+							  <th>5956</th>
+							  <td>CILACAP_INDONESIA</td>
+							  <td>-7.700</td>
+							  <td>109.000</td>
+							  <td>Indonesia</td>
+							  <td>2014</td>
+							  <td>1</td>
+							  <td>27.10</td>
+							</tr>
+							<tr>
+							  <th>5957</th>
+							  <td>CILACAP_INDONESIA</td>
+							  <td>-7.700</td>
+							  <td>109.000</td>
+							  <td>Indonesia</td>
+							  <td>2015</td>
+							  <td>1</td>
+							  <td>27.50</td>
+							</tr>
+							<tr>
+							  <th>5958</th>
+							  <td>JAMBI_PAALMERAH</td>
+							  <td>-1.600</td>
+							  <td>103.700</td>
+							  <td>Indonesia</td>
+							  <td>2015</td>
+							  <td>1</td>
+							  <td>26.60</td>
+							</tr>
+						  </tbody>
+						</table>
+						<p>5959 rows × 7 columns</p>
+						</div>
+						<p>The DataFrames above contain the correct columns we want. Then, I want to define a temperature_coefficient_scatter function to plot an interactive 3D scatterplot.</p>
+						<pre><code>import numpy as np
+def temperature_coefficient_scatter(country1, country2, country3, year_begin, year_end, month, min_obs, **kwargs):
+	"""
+	Create an interactive 3D scatterplot by using Plotly Express; there should be a 3D scatterplot for all the three input countries where the point of a certain color is the standard deviation of the temperatures of all the stations in a specified month in several years.
+	
+	Parameters
+	----------
+	country1: the input string about the name of the first country
+	country2: the input string about the name of the second country
+	country3: the input string about the name of the third country
+	year_begin: an input integer about the earliest year of the time interval
+	year_end: an input integer about the latest year of the time interval
+	month: an input integer about the month of the year
+	min_obs: the minimum required number of years of data for any given station
+	**kwargs: additional keyword arguments passed to px.scatter()
+	
+	Return 
+	----------
+	fig: an interactive 3D scatterplot by Plotly Express of three countries in different colors
+	"""
+	
+	df = query_climate_three_countries(country1, country2, country3, year_begin, year_end, month) # use the query_climate_three_countries function created above
+	
+	eligible_stations = df.groupby(["NAME"])["Year"].transform(len) # use df.groupby().transform() to find the number of years each station has done temperature measurements
+	df = df[eligible_stations >= min_obs] # keep data for stations with at least min_obs years worth of data in the specified month and filter out the others
+	
+	df_update = df.groupby(["NAME", "Country", "LATITUDE", "LONGITUDE"])["Temp"].std() # calculate standard deviation
+	df_update = df_update.reset_index()
+	df_update["Temp"] = df_update["Temp"].round(decimals = 4) # round the decimals of "Temp"
+	df_update = df_update.rename({"NAME": "Station Name"}, axis = 1) # rename the column
+	
+	# make a 3D scatterplot by using Plotly Express with the information of "LATITUDE", "Temp", "Country", "Station Name", and "LONGITUDE" in df_update
+	fig = px.scatter_3d(df_update, 
+						x = "LATITUDE", 
+						y = "LONGITUDE",
+						z = "Temp",
+						color = "Country",
+						hover_name = "Station Name",
+						hover_data = ["LONGITUDE"],
+						labels = {"Temp": "Standard Deviation", "LATITUDE": "Latitude", "LONGITUDE": "Longitude"},
+						title = f"Standard Deviation of Temperatures in " + calendar.month_name[month] + f" in years {year_begin} - {year_end} <br>in {country1}, {country2}, and {country3}",
+						**kwargs)
+	
+	fig.update_traces(marker = dict(size = 3))
+
+	return fig</code></pre>
+						<pre><code>pio.templates.default = "plotly_white" # choose a theme
+
+fig = temperature_coefficient_scatter("Norway", "Russia", "Finland", 2000, 2020, 1, 10,
+								width = 1000,
+								height = 500,
+								opacity = 0.3)
+
+fig.update_layout(margin={"r":50,"t":50,"l":50,"b":50}) # set the margin
+fig.update_layout(legend = dict(yanchor = "top", y = 0.7, xanchor = "left", x = 0.01)) # set the position of the legend
+fig.show()
+
+write_html(fig, "Norway_Russia_Finland_Comparison.html") # save the output in a html file</code></pre>
+						<iframe src="includes/Norway_Russia_Finland_Comparison.html" width="100%" height="800"></iframe>
+						<p>The above 3D scatterplot shows that there are many stations in Russia, Norway, and Finland since there are many colorful points. Besides that, the points of each country are spreading out and have large standard deviations. These observation results show that the temperature variation is large in Russia, Norway, and Finland, which means that there is a large change in temperature in each country in years 2000 to 2020.</p>
+			
+						<pre><code>pio.templates.default = "plotly_white" # choose a theme
+
+fig = temperature_coefficient_scatter("Indonesia", "Brazil", "Colombia", 2000, 2020, 1, 10,
+								width = 1000,
+								height = 500,
+								opacity = 0.3)
+
+fig.update_layout(margin={"r":50,"t":50,"l":50,"b":50}) # set the margin
+fig.update_layout(legend = dict(yanchor = "top", y = 0.7, xanchor = "left", x = 0.01)) # set the position of the legend
+fig.show()
+
+write_html(fig, "Indonesia_Brazil_Colombia_Comparison.html") # save the output in a html file</code></pre>
+						<iframe src="includes/Indonesia_Brazil_Colombia_Comparison.html" width="100%" height="800"></iframe>
+						<p>The above interactive 3D scatterplot shows that there are fewer stations in Brazil, Indonesia, and Colombia, comparing to the first interactive 3D scatterplot since the points are fewer. In addition, the standard deviations of temperatures are quite small, representing a small change in temperature in the years 2000 to 2020 in these countries.</p>
+						<p>In general, the first plot shows that stations in Russia, Norway, and Finland have quite large temperature variations due to the large standard deviations. Differently, the second plot shows that stations in Brazil, Indonesia, and Colombia have quite small temperature variations due to the small standard deviations. The above two plots also show that the countries in similar latitude usually may have a similar standard deviation of temperatures, no matter what their longitudes are. The above information read from the plots shows that countries near the equator usually have smaller temperature variation, while the countries far away from the equator usually have larger temperature variation. This is likely to be true since the temperature of the countries near the equator tends to be higher, and therefore, the temperature will be less likely to increase, which may be caused by global warming since the temperature in those countries has already been quite high.</p>
+			
+			
+			
+			
+			
+			
+					</section>
+					</div>
+
+				<!-- Footer -->
+					<footer id="footer">
+						<section>
+							<h2>Techniques</h2>
+							<p> SQL &bull; Python &bull; Pandas &bull; Plotly &bull; Interactive Geographic Graphs &bull; Linear Regression &bull; 3D Graphs
+							</p>
+							<ul class="actions">
+								<li><a href="index.html" class="button">Go To Main</a></li>
+							</ul>
+						</section>
+						<section>
+							<h2>Contact</h2>
+							<dl class="alt">
+								<dt>Address</dt>
+								<dd>Chicago, IL &bull; Los Angeles, CA</dd>
+								<dt>Phone</dt>
+								<dd>(424) 407-6619</dd>
+								<dt>Email</dt>
+								<dd><a href="#">jingxuanzhang@uchicago.edu</a></dd>
+							</dl>
+							<ul class="icons">
+								<li><a href="https://www.linkedin.com/in/stancyzhang/" class="icon brands fa-linkedin alt"><span class="label">LinkedIn</span></a></li>
+								<li><a href="https://github.com/StancyZhang" class="icon brands fa-github alt"><span class="label">GitHub</span></a></li>
+							</ul>
+						</section>
+						<p class="copyright">&copy; Stancy Portfolio. Design: <a href="https://html5up.net">HTML5 UP</a>.</p>
+					</footer>
+
+			</div>
+
+		<!-- Scripts -->
+			<script src="assets/js/jquery.min.js"></script>
+			<script src="assets/js/jquery.scrollex.min.js"></script>
+			<script src="assets/js/jquery.scrolly.min.js"></script>
+			<script src="assets/js/browser.min.js"></script>
+			<script src="assets/js/breakpoints.min.js"></script>
+			<script src="assets/js/util.js"></script>
+			<script src="assets/js/main.js"></script>
+
+	</body>
+</html>

@@ -1,0 +1,380 @@
+<!DOCTYPE HTML>
+<!--
+	Stellar by HTML5 UP
+	html5up.net | @ajlkn
+	Free for personal and commercial use under the CCA 3.0 license (html5up.net/license)
+-->
+<html>
+	<head>
+		<title>Stancy Zhang</title>
+		<script type="text/x-mathjax-config">
+			MathJax.Hub.Config({tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}});
+		  </script>
+		  <script type="text/javascript"
+			src="http://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
+		  </script>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
+		<link rel="stylesheet" href="assets/css/main.css" />
+		<noscript><link rel="stylesheet" href="assets/css/noscript.css" /></noscript>
+	</head>
+	<body class="is-preload">
+
+		<!-- Wrapper -->
+			<div id="wrapper">
+
+				<!-- Header -->
+					<header id="header">
+						<h1>World Happiness Report Analysis</h1>
+						<h2>A deep dive into the correlation between GDP per capita, social support, healthy life expectancy, freedom, and overall happiness scores across nations.</h2>
+						<p>Feburary 2021</p>
+						<a href="index.html" class="button">Go To Main</a>
+					</header>
+
+				<!-- Main -->
+					<div id="main">
+
+						<!-- Content -->
+							<section id="content" class="main">
+								<h2>Goal</h2>
+								<p>"Delving into the World Happiness Report, this analysis seeks to illuminate the multifaceted interplay between a country's economic prosperity, social fabric, health metrics, and the freedoms granted to its populace. As nations strive for greater contentment among their citizens, understanding these dynamics is paramount. The overarching objective of this exploration is not just to quantify happiness but to discern the primary, often subtle, drivers that underpin the collective well-being of nations globally.</p>
+								<h3>Import the Data</h3>
+<pre><code class="language-python">import pandas as pd
+happiness = pd.read_csv(&quot;data.csv&quot;)
+happiness
+</code></pre>
+
+<div class="table-wrapper">
+	<style scoped>
+		.dataframe tbody tr th:only-of-type {
+			vertical-align: middle;
+		}
+	
+		.dataframe tbody tr th {
+			vertical-align: top;
+		}
+	
+		.dataframe thead th {
+			text-align: right;
+		}
+	</style>
+	<table border="1" class="dataframe alt">
+	  <thead>
+		<tr style="text-align: right;">
+			<th></th>
+			<th>Overall rank</th>
+			<th>Country or region</th>
+			<th>Score</th>
+			<th>GDP per capita</th>
+			<th>Social support</th>
+			<th>Healthy life expectancy</th>
+			<th>Freedom to make life choices</th>
+			<th>Generosity</th>
+			<th>Perceptions of corruption</th>
+		  </tr>
+		</thead>
+		<tbody>
+		  <tr>
+			<th>0</th>
+			<td>1</td>
+			<td>Finland</td>
+			<td>7.769</td>
+			<td>1.340</td>
+			<td>1.587</td>
+			<td>0.986</td>
+			<td>0.596</td>
+			<td>0.153</td>
+			<td>0.393</td>
+		  </tr>
+		  <tr>
+			<th>1</th>
+			<td>2</td>
+			<td>Denmark</td>
+			<td>7.600</td>
+			<td>1.383</td>
+			<td>1.573</td>
+			<td>0.996</td>
+			<td>0.592</td>
+			<td>0.252</td>
+			<td>0.410</td>
+		  </tr>
+		  <tr>
+			<th>2</th>
+			<td>3</td>
+			<td>Norway</td>
+			<td>7.554</td>
+			<td>1.488</td>
+			<td>1.582</td>
+			<td>1.028</td>
+			<td>0.603</td>
+			<td>0.271</td>
+			<td>0.341</td>
+		  </tr>
+		  <tr>
+			<th>3</th>
+			<td>4</td>
+			<td>Iceland</td>
+			<td>7.494</td>
+			<td>1.380</td>
+			<td>1.624</td>
+			<td>1.026</td>
+			<td>0.591</td>
+			<td>0.354</td>
+			<td>0.118</td>
+		  </tr>
+		  <tr>
+			<th>4</th>
+			<td>5</td>
+			<td>Netherlands</td>
+			<td>7.488</td>
+			<td>1.396</td>
+			<td>1.522</td>
+			<td>0.999</td>
+			<td>0.557</td>
+			<td>0.322</td>
+			<td>0.298</td>
+		  </tr>
+		  <tr>
+			<th>...</th>
+			<td>...</td>
+			<td>...</td>
+			<td>...</td>
+			<td>...</td>
+			<td>...</td>
+			<td>...</td>
+			<td>...</td>
+			<td>...</td>
+			<td>...</td>
+		  </tr>
+		  <tr>
+			<th>151</th>
+			<td>152</td>
+			<td>Rwanda</td>
+			<td>3.334</td>
+			<td>0.359</td>
+			<td>0.711</td>
+			<td>0.614</td>
+			<td>0.555</td>
+			<td>0.217</td>
+			<td>0.411</td>
+		  </tr>
+		  <tr>
+			<th>152</th>
+			<td>153</td>
+			<td>Tanzania</td>
+			<td>3.231</td>
+			<td>0.476</td>
+			<td>0.885</td>
+			<td>0.499</td>
+			<td>0.417</td>
+			<td>0.276</td>
+			<td>0.147</td>
+		  </tr>
+		  <tr>
+			<th>153</th>
+			<td>154</td>
+			<td>Afghanistan</td>
+			<td>3.203</td>
+			<td>0.350</td>
+			<td>0.517</td>
+			<td>0.361</td>
+			<td>0.000</td>
+			<td>0.158</td>
+			<td>0.025</td>
+		  </tr>
+		  <tr>
+			<th>154</th>
+			<td>155</td>
+			<td>Central African Republic</td>
+			<td>3.083</td>
+			<td>0.026</td>
+			<td>0.000</td>
+			<td>0.105</td>
+			<td>0.225</td>
+			<td>0.235</td>
+			<td>0.035</td>
+		  </tr>
+		  <tr>
+			<th>155</th>
+			<td>156</td>
+			<td>South Sudan</td>
+			<td>2.853</td>
+			<td>0.306</td>
+			<td>0.575</td>
+			<td>0.295</td>
+			<td>0.010</td>
+			<td>0.202</td>
+			<td>0.091</td>
+		  </tr>
+	  </tbody>
+	</table>
+</div>
+
+
+<p>This is a <code>pandas</code> data frame. Observe the following:</p>
+<ol>
+<li>Each row corresponds to a country or region.</li>
+<li>The <code>Score</code> column is the overall happiness score of the country, evaluated via surveys.</li>
+<li>The other columns give indicators of different features of life in the country, including GDP, level of social support, life expectancy, freedom, generosity of compatriots, and perceptions of corruption in governmental institutions.</li>
+</ol>
+<h3>Create a scatterplot of the overall <code>Score</code> column against <code>GDP per capita</code>.</h3>
+<pre><code class="language-python"># plotting code here
+fig, ax = plt.subplots(1) # create an empty plot
+ax.set(xlabel = &quot;GDP per capita&quot;,
+       ylabel = &quot;Score&quot;) # add x-label and y-label to the x-axis and y-axis, respectively
+ax.scatter(happiness[&quot;GDP per capita&quot;], happiness[&quot;Score&quot;]) # make the scatterplot plot with &quot;Score&quot; vs. &quot;GDP per capita&quot; from the happiness dataframe
+</code></pre>
+<pre><code>&lt;matplotlib.collections.PathCollection at 0x7fb71f7c5340&gt;
+</code></pre>
+<p><img src="/images/World_Happiness/output_4_1.png" alt="png"></p>
+<hr>
+<p>The result shows the positive correlation that a country with higher GDP per capita has a higher overall happiness score. This makes sense to me since usually a country of higher GDP per capita usually has better living quality and more advanced technology, which are likely to influence people who live in those countries to be happier. Thus, the overall happiness score is higher in those countries.</p>
+<hr>
+<h3>Better Plots</h3>
+<p>The plot above may have helped us understand whether or not there's a relationship between the overall happiness score and GDP per capita. However, there are several variables in this data set, and we don't want to manually re-run the plot for each pair of variables. So we can get a more systematic view of the correlations in the data.</p>
+<pre><code class="language-python"># define your function
+def scatterplot_matrix(cols = [&quot;Score&quot;, &quot;GDP per capita&quot;, &quot;Social support&quot;], figsize = (10, 10)):
+    &quot;&quot;&quot;
+    Create a scatterplot matrix with a separate scatterplot for each possible pair of variables. The first variable is on the horizontal axis, while the second variable is on the vertical axis.
+    
+    Parameter
+    ----------
+    cols: a list of strings, each of which are the name of one of the columns in the happiness dataframe (assume [&quot;Score&quot;, &quot;GDP per capita&quot;, &quot;Social support&quot;] as the default value)
+    figsize: an input tuple represents the size of the figure (assume (10, 10) as the default value)
+    &quot;&quot;&quot;
+    
+    # create empty subplots based on the length of cols and figsize
+    fig, ax = plt.subplots(len(cols), len(cols), figsize = figsize)
+    
+    for i in range(len(cols)): # loop over each column in the created empty subplots
+        for j in range(len(cols)): # loop over each row in the created empty subplots
+            ax[j,i].set(title = cols[j], ylabel = cols[i]) # add the first variable name as title and the second variable name as y-label
+            if i != j: # if row number and column number are not the same, which means the subplot is not on the diagonal
+                ax[j,i].scatter(happiness[cols[j]], happiness[cols[i]], marker = &quot;.&quot;) # make the scatterplot with certain columns of two variables in the happiness dataframe and mark as &quot;.&quot;
+                correlation_coefficient = np.corrcoef(happiness[cols[j]], happiness[cols[i]]) # use np.corrcoef() to calculate the correlation coefficient between those two variables
+                ax[j,i].set(xlabel = r&quot;$\rho$ = &quot; + str(np.round(correlation_coefficient[1][0], 2))) # choose, round, and add correlation coefficient as x-label on the x-axis of each subplot
+    
+    plt.tight_layout() # avoid squished plots
+</code></pre>
+<pre><code class="language-python">cols = [&quot;Score&quot;, 
+        &quot;GDP per capita&quot;, 
+        &quot;Social support&quot;]
+
+scatterplot_matrix(cols,figsize = (7,7))
+</code></pre>
+<p><img src="/images/World_Happiness/output_8_0.png" alt="png"></p>
+<pre><code class="language-python"># code demonstration with observations below
+cols = [&quot;Score&quot;, 
+        &quot;GDP per capita&quot;, 
+        &quot;Social support&quot;,
+        &quot;Healthy life expectancy&quot;,
+        &quot;Freedom to make life choices&quot;,
+        &quot;Generosity&quot;,
+        &quot;Perceptions of corruption&quot;]
+
+scatterplot_matrix(cols,figsize = (20,20))
+</code></pre>
+<p><img src="/images/World_Happiness/output_9_0.png" alt="png"></p>
+<p>Observations (skip repetitions of two same variables):</p>
+<ul>
+<li>Score vs. a variable</li>
+</ul>
+<p>Country with higher GDP per capita has a higher overall happiness score.</p>
+<p>Country with higher social support has a higher overall happiness score.</p>
+<p>Country with higher healthy life expectancy has a higher overall happiness score.</p>
+<p>Country with higher freedom to make life choices has a higher overall happiness score.</p>
+<p>Country with lower generosity has a higher overall happiness score.</p>
+<p>Country with lower perceptions of corruption has a higher overall happiness score.</p>
+<ul>
+<li>GDP per capita vs. a variable</li>
+</ul>
+<p>Country with higher social support has higher GDP per capita.</p>
+<p>Country with higher healthy life expectancy has higher GDP per capita.</p>
+<p>Country with higher freedom to make life choices has higher GDP per capita.</p>
+<p>Country with lower generosity has higher GDP per capita.</p>
+<p>Country with lower perceptions of corruption has higher GDP per capita.</p>
+<ul>
+<li>Social support vs. a variable</li>
+</ul>
+<p>Country with higher healthy life expectancy has higher social support.</p>
+<p>Country with higher freedom to make life choices has higher social support.</p>
+<p>Country with lower generosity has higher social support.</p>
+<p>Country with lower perceptions of corruption has higher social support.</p>
+<ul>
+<li>Healthy life expectancy vs. a variable</li>
+</ul>
+<p>Country with higher freedom to make life choices has a little bit of higher healthy life expectancy.</p>
+<p>Country with lower generosity has higher healthy life expectancy.</p>
+<p>Country with lower perceptions of corruption has higher healthy life expectancy.</p>
+<ul>
+<li>Freedom to make life choices vs. a variable</li>
+</ul>
+<p>Country with lower generosity has higher freedom to make life choices.</p>
+<p>Country with lower perceptions of corruption has higher freedom to make life choices.</p>
+<ul>
+<li>Generosity vs. a variable</li>
+</ul>
+<p>Country with lower perceptions of corruption has lower generosity.</p>
+<h3>Compute the correlation coefficient between two or more variables</h3>
+<p>The <em>correlation coefficient</em> is a measure of linear correlation between two variables. The correlation coefficient between X and Y is high if X tends to be high when Y is, and vice versa. Correlation coefficients lie in the interval [-1, 1].</p>
+<pre><code class="language-python"># code demonstration
+cols = [&quot;Score&quot;, 
+        &quot;GDP per capita&quot;, 
+        &quot;Social support&quot;]
+
+scatterplot_matrix(cols,figsize = (7,7))
+</code></pre>
+<p><img src="/images/World_Happiness/output_12_0.png" alt="png"></p>
+<pre><code class="language-python">cols = [&quot;GDP per capita&quot;, 
+        &quot;Freedom to make life choices&quot;,
+        &quot;Generosity&quot;]
+
+scatterplot_matrix(cols,figsize = (9,9))
+</code></pre>
+<p><img src="/images/World_Happiness/output_13_0.png" alt="png"></p>
+
+
+					</section>
+					</div>
+
+				<!-- Footer -->
+					<footer id="footer">
+						<section>
+							<h2>Techniques</h2>
+							<p> Python &bull; Pandas &bull; Economy &bull; Correlation
+							</p>
+							<ul class="actions">
+								<li><a href="index.html" class="button">Go To Main</a></li>
+							</ul>
+						</section>
+						<section>
+							<h2>Contact</h2>
+							<dl class="alt">
+								<dt>Address</dt>
+								<dd>Chicago, IL &bull; Los Angeles, CA</dd>
+								<dt>Phone</dt>
+								<dd>(424) 407-6619</dd>
+								<dt>Email</dt>
+								<dd><a href="#">jingxuanzhang@uchicago.edu</a></dd>
+							</dl>
+							<ul class="icons">
+								<li><a href="https://www.linkedin.com/in/stancyzhang/" class="icon brands fa-linkedin alt"><span class="label">LinkedIn</span></a></li>
+								<li><a href="https://github.com/StancyZhang" class="icon brands fa-github alt"><span class="label">GitHub</span></a></li>
+							</ul>
+						</section>
+						<p class="copyright">&copy; Stancy Portfolio. Design: <a href="https://html5up.net">HTML5 UP</a>.</p>
+					</footer>
+
+			</div>
+
+		<!-- Scripts -->
+			<script src="assets/js/jquery.min.js"></script>
+			<script src="assets/js/jquery.scrollex.min.js"></script>
+			<script src="assets/js/jquery.scrolly.min.js"></script>
+			<script src="assets/js/browser.min.js"></script>
+			<script src="assets/js/breakpoints.min.js"></script>
+			<script src="assets/js/util.js"></script>
+			<script src="assets/js/main.js"></script>
+
+	</body>
+</html>

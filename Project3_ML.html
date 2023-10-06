@@ -1,0 +1,734 @@
+<!DOCTYPE HTML>
+<!--
+	Stellar by HTML5 UP
+	html5up.net | @ajlkn
+	Free for personal and commercial use under the CCA 3.0 license (html5up.net/license)
+-->
+<html>
+	<head>
+		<title>Stancy Zhang</title>
+		<script type="text/x-mathjax-config">
+			MathJax.Hub.Config({tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}});
+		  </script>
+		  <script type="text/javascript"
+			src="http://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
+		  </script>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
+		<link rel="stylesheet" href="assets/css/main.css" />
+		<noscript><link rel="stylesheet" href="assets/css/noscript.css" /></noscript>
+	</head>
+	<body class="is-preload">
+
+		<!-- Wrapper -->
+			<div id="wrapper">
+
+				<!-- Header -->
+					<header id="header">
+						<h1>Building a Fake News Classifier with Tensorflow</h1>
+						<h3>Crafting an intricate machine learning model designed to discern between genuine and fake news articles. This deep dive into advanced model development showcases the power of Tensorflow in the fight against misinformation. </h3>
+						<p>May 2021</p>
+						<a href="index.html" class="button">Go To Main</a>
+					</header>
+
+				<!-- Main -->
+					<div id="main">
+
+						<!-- Content -->
+							<section id="content" class="main">
+								<h2>Goal</h2>
+								<hr>
+
+<p>I am going to develop and assess a fake news classifier using Tensorflow, which is commonly used for researchers in creating machine learning models. We are going to create a machine learning model to predict whether a news article is fake based on the article content. Let's get started.</p>
+<h2>Import Training Data</h2>
+<p>The data we are going to import for this blog post is from the article:</p>
+<ul>
+<li>Ahmed H, Traore I, Saad S. (2017) “Detection of Online Fake News Using N-Gram Analysis and Machine Learning Techniques. In: Traore I., Woungang I., Awad A. (eds) <em>Intelligent, Secure, and Dependable Systems in Distributed and Cloud Environments.</em> ISDDC 2017. <em>Lecture Notes in Computer Science</em>, vol 10618. Springer, Cham (pp. 127-138).</li>
+</ul>
+<p>The data we are using has been separated into training data and test data. In order to build a machine learning model, we are going to import the training data first. We may access the training data from</p>
+<p><a href="https://github.com/PhilChodrow/PIC16b/blob/master/datasets/fake_news_train.csv?raw=true">https://github.com/PhilChodrow/PIC16b/blob/master/datasets/fake_news_train.csv?raw=true</a></p>
+<p>after small modifications on the original data. We will import the test data after we have built the models and ready to evaluate our best model in the later sections.</p>
+<p>I have downloaded the csv file from the above link. Let's read the csv file by pandas to create the training <code>fake_news</code> dataframe.</p>
+<pre><code class="language-python"># import pandas package using to analyzed dataframe
+import pandas as pd
+# import fake_news_train.csv into a DataFrame called fake_news
+fake_news = pd.read_csv(&quot;fake_news_train.csv&quot;)
+</code></pre>
+<p>Let's see the top five rows of the <code>fake_news</code> dataframe.</p>
+<pre><code class="language-python">fake_news.head()
+</code></pre>
+<div class="table-wrapper">
+	<style scoped>
+		.dataframe tbody tr th:only-of-type {
+			vertical-align: middle;
+		}
+	
+		.dataframe tbody tr th {
+			vertical-align: top;
+		}
+	
+		.dataframe thead th {
+			text-align: right;
+		}
+	</style>
+	<table border="1" class="dataframe alt">
+	  <thead>
+		<tr style="text-align: right;">
+		  <th></th>
+		  <th>Unnamed: 0</th>
+		  <th>title</th>
+		  <th>text</th>
+		  <th>fake</th>
+		</tr>
+	  </thead>
+	  <tbody>
+		<tr>
+		  <th>0</th>
+		  <td>17366</td>
+		  <td>Merkel: Strong result for Austria's FPO 'big c...</td>
+		  <td>German Chancellor Angela Merkel said on Monday...</td>
+		  <td>0</td>
+		</tr>
+		<tr>
+		  <th>1</th>
+		  <td>5634</td>
+		  <td>Trump says Pence will lead voter fraud panel</td>
+		  <td>WEST PALM BEACH, Fla.President Donald Trump sa...</td>
+		  <td>0</td>
+		</tr>
+		<tr>
+		  <th>2</th>
+		  <td>17487</td>
+		  <td>JUST IN: SUSPECTED LEAKER and “Close Confidant...</td>
+		  <td>On December 5, 2017, Circa s Sara Carter warne...</td>
+		  <td>1</td>
+		</tr>
+		<tr>
+		  <th>3</th>
+		  <td>12217</td>
+		  <td>Thyssenkrupp has offered help to Argentina ove...</td>
+		  <td>Germany s Thyssenkrupp, has offered assistance...</td>
+		  <td>0</td>
+		</tr>
+		<tr>
+		  <th>4</th>
+		  <td>5535</td>
+		  <td>Trump say appeals court decision on travel ban...</td>
+		  <td>President Donald Trump on Thursday called the ...</td>
+		  <td>0</td>
+		</tr>
+	  </tbody>
+	</table>
+	</div>
+<p>Based on the above dataframe, we can see that each row represents the information of one article, and there are four columns, which are <code>Unnamed:0</code>, <code>title</code>, <code>text</code>, and <code>fake</code>:</p>
+<ul>
+<li><code>title</code>: the title of the article</li>
+<li><code>text</code>: the full article text</li>
+<li><code>fake</code>: 0 represents the article contains all true content, and 1 represents the article contains fake news</li>
+</ul>
+<p>where <code>Unnamed:0</code> will not be used for the blog post.</p>
+<h2>Make a Dataset</h2>
+<p>Notice that in the <code>title</code> and <code>text</code> columns in the <code>fake_news</code> dataframe, there are words, such as &quot;a&quot;, &quot;the&quot;, and &quot;and&quot;. We usually called these words as <em>stopwords</em>. Since these stopwords have no significant meaning, we want to remove these words to clean our data and make a new dataset.</p>
+<p>Hence, the purpose of this part is to write a function called <code>make_dataset</code>:</p>
+<ol>
+<li>remove the uninformative stopwords in the &quot;title&quot; and &quot;text&quot; columns in fake_news dataframe</li>
+<li>return a <code>tf.data.Dataset</code> with a tuple of <code>(title, text)</code> as inputs and the <code>fake</code> column as the ouput</li>
+</ol>
+<p>By calling the <code>make_dataset</code> function on our training <code>fake_news</code> dataframe, we will be able to directly get a dataset that satisfied the above requirements.</p>
+<p>Before starting to write the <code>make_dataset</code> function, we need to find a way to know all the stopwords in advance so that we will be able to recognize the stopwords in the <code>title</code> and <code>text</code> columns. Thanks to the sklearn module, we will be able to know the stopwords by using the <code>text</code> from <code>sklearn.feature_extraction</code>. Let's import the sklearn package and produce the stopwords.</p>
+<pre><code class="language-python"># import sklearn package to be familiar with stopwords
+from sklearn.feature_extraction import text
+stopwords = text.ENGLISH_STOP_WORDS
+</code></pre>
+<p>Next, in order to make a TensorFlow dataset in the <code>make_dataset</code> function, we need to import the <code>tensorflow</code> package. Besides that, we need to import the <code>nltk</code> package, which is used for dividing a string into substrings and is helpful for the process of removing stopwords later.</p>
+<pre><code class="language-python">import tensorflow as tf
+import nltk
+</code></pre>
+<p>Since the data from the <code>title</code> and <code>text</code> columns in the <code>fake_news</code> dataframe contain words in both lower and upper cases, we need to lowercase all the data so that we may check whether those words in lower cases are in <code>stopwords</code>, which consisting all stopwords in lower cases, or not. Now, let's define the <code>make_dataset</code> function.</p>
+<pre><code class="language-python">def make_dataset(df):
+    &quot;&quot;&quot;
+    Remove the stopwords inside the title and text columns of the input dataframe 
+    and make a TensorFlow dataset based on the updated title and text columns and 
+    the fake column.
+    
+    Parameter
+    ----------
+    df: an input dataframe consisting the title, text, and fake columns
+    
+    Return 
+    ----------
+    ds: a TensorFlow dataset with input (title, text) and output the fake column
+    &quot;&quot;&quot;
+    
+    # step 1: remove stopwords in the title and text columns
+    # use apply method to first lower the letters of each word
+    # and then remove the words that are stopwords
+    # this will go through each row of the dataframe column
+    tokenizer = nltk.RegexpTokenizer(r&quot;\w+&quot;)
+    df[&quot;title&quot;] = df[&quot;title&quot;].apply(lambda x: x.lower())
+    df[&quot;title&quot;] = df[&quot;title&quot;].apply(lambda x: ' '.join([word for word in tokenizer.tokenize(x) if word not in stopwords]))
+    df[&quot;text&quot;] = df[&quot;text&quot;].apply(lambda x: x.lower())
+    df[&quot;text&quot;] = df[&quot;text&quot;].apply(lambda x: ' '.join([word for word in tokenizer.tokenize(x) if word not in stopwords]))
+    
+    # step 2: make a TensorFlow dataset
+    ds = tf.data.Dataset.from_tensor_slices(
+    (
+        {
+            &quot;title&quot; : df[[&quot;title&quot;]], 
+            &quot;text&quot;  : df[&quot;text&quot;]
+        }, 
+        {
+            &quot;fake&quot;  : df[[&quot;fake&quot;]]
+        }
+    )
+    )
+    
+    # batch the dataset to make our model to train on chunks of data
+    ds = ds.batch(100)
+    
+    return ds
+</code></pre>
+
+<h2>Data Preparation</h2>
+<p>Let's call the <code>make_dataset</code> function by using the fake_news dataframe as an input to return a TensorFlow dataset as our primary dataset.</p>
+<pre><code class="language-python">data = make_dataset(fake_news)
+</code></pre>
+<p>The next step we are going to do is to split <code>data</code> into training data and validation data. We set our training data to be 80% of <code>data</code> and the validation data to be 20% of <code>data</code>.</p>
+<pre><code class="language-python">data = data.shuffle(buffer_size = len(data))
+# training data size 80%
+train_size = int(0.8*len(data))
+# validation data size 20%
+val_size   = int(0.2*len(data))
+# get the training data by training data size
+train = data.take(train_size)
+# get the validation data by validation data size
+# use skip(train_size) to avoid same data
+val = data.skip(train_size).take(val_size)
+</code></pre>
+<h2>Create Models</h2>
+<p>In this section, we are going to create three TensorFlow models with different inputs:</p>
+<ol>
+<li>only the article title</li>
+<li>only the article text</li>
+<li>both the article title and the article text
+The goal of creating these models is to answer the following question:</li>
+</ol>
+<blockquote>
+<p>When detecting fake news, is it most effective to focus on only the title of the article, the full text of the article, or both?</p>
+</blockquote>
+<p>We are going to use <code>Keras Functional API</code> to construct all of the three models. Comparing to <code>Keras Sequential API</code>, <code>Keras Functional API</code> is more flexible in building models with shared layers and multiple outputs that we are going to use for this blog post. Before creating each model separately, we need to import the relevant packages.</p>
+<pre><code class="language-python">from tensorflow.keras import layers
+from tensorflow.keras import losses
+from tensorflow import keras
+</code></pre>
+<p>Before building each model, we may define some variables and prepare the input data that will be used in all three models first for simplification.</p>
+<h3>Vectorization</h3>
+<p>In order to make the computer understands the meaning of the content in the dataset, we need to change the string to a vector consisting of numbers. This process of representing text as a vector is called <code>Vectorization</code>. Besides that, we also need to lowercase the string and remove the punctuations. Based on the above rules, we are going to define a <code>standardization</code> function and pass it as an argument to the vectorization layer.</p>
+<pre><code class="language-python"># import relevant packages in advance for vectorization later
+from tensorflow.keras.layers.experimental.preprocessing import TextVectorization
+from tensorflow.keras.layers.experimental.preprocessing import StringLookup
+import string
+import re
+</code></pre>
+<pre><code class="language-python">size_vocabulary = 2000
+
+def standardization(input_data):
+    &quot;&quot;&quot;
+    Lowercase the words and remove punctuations in the input Tensorflow dataset.
+    &quot;&quot;&quot;
+
+    # lowercase the strings again to make sure
+    lowercase = tf.strings.lower(input_data)
+    # remove punctuations
+    no_punctuation = tf.strings.regex_replace(lowercase,
+                                  '[%s]' % re.escape(string.punctuation),'')
+    return no_punctuation 
+
+# though make_dataset function can lowercase the dataset and remove punctuations
+# we may still use standardization to update the dataset again
+# we set size_vocabulary to be 2000
+vectorize_layer = TextVectorization(
+    standardize = standardization,
+    max_tokens = size_vocabulary,
+    output_mode ='int',
+    output_sequence_length = 500) 
+
+vectorize_layer.adapt(train.map(lambda x, y: x[&quot;title&quot;]))
+</code></pre>
+<p>Similarly, we are going to do vectorization to the <code>text</code> by using the <code>standardization</code> function defined in the previous part to let the computer understand the data.</p>
+<pre><code class="language-python"># though make_dataset function can lowercase the dataset and remove punctuations
+# we may still use standardization to update the dataset again
+# we set size_vocabulary to be 2000
+vectorize_layer = TextVectorization(
+    standardize = standardization,
+    max_tokens = size_vocabulary,
+    output_mode ='int',
+    output_sequence_length = 500) 
+
+vectorize_layer.adapt(train.map(lambda x, y: x[&quot;text&quot;]))
+</code></pre>
+<h3>Define Embedding</h3>
+<p>We are going to define <code>shared_embedding</code> as the same layer in all three models that we want to build. The Embedding layer will be important for the later steps.</p>
+<pre><code class="language-python">shared_embedding = layers.Embedding(size_vocabulary, 10, name = &quot;embedding&quot;)
+</code></pre>
+<h3>Define Inputs</h3>
+<p>When constructing all three models, we need to specify the keras.Input. For all three models, they used two inputs repeatedly. We may define <code>title_input</code> and <code>text_input</code> in advance for convenience.</p>
+<pre><code class="language-python"># define title_input
+title_input = keras.Input(
+    shape = (1,), 
+    name = &quot;title&quot;,
+    dtype = &quot;string&quot;
+)
+</code></pre>
+<pre><code class="language-python"># define text_input
+text_input = keras.Input(
+    shape = (1,), 
+    name = &quot;text&quot;,
+    dtype = &quot;string&quot;
+)
+</code></pre>
+<h3>First Model: use only <code>title</code></h3>
+<h4>Write the Pipeline</h4>
+<p>We are going to construct the first model with the following few layers first. The <code>Embedding</code> layer will be the <code>shared_embedding</code> defining above. This layer will be important for the later steps.</p>
+<pre><code class="language-python"># create the following layers one by one
+title_features = vectorize_layer(title_input)
+title_features = shared_embedding(title_features)
+title_features = layers.Dropout(0.2)(title_features)
+title_features = layers.GlobalAveragePooling1D()(title_features)
+title_features = layers.Dropout(0.2)(title_features)
+title_features = layers.Dense(32, activation = 'relu')(title_features)
+# output layer
+output_title = layers.Dense(2, name = &quot;fake&quot;)(title_features)
+</code></pre>
+<h4>Create the First Model</h4>
+<p>Now, let's create the first model by specifying the input, title_input, and output in the following cell.</p>
+<pre><code class="language-python">model_title = keras.Model(
+    inputs = [title_input],
+    outputs = output_title
+)
+</code></pre>
+<p>We may also see the layers of our first model by running the cell below.</p>
+<pre><code class="language-python">model_title.summary()
+</code></pre>
+<pre><code>Model: &quot;model&quot;
+_________________________________________________________________
+Layer (type)                 Output Shape              Param #   
+=================================================================
+title (InputLayer)           [(None, 1)]               0         
+_________________________________________________________________
+text_vectorization_1 (TextVe (None, 500)               0         
+_________________________________________________________________
+embedding (Embedding)        (None, 500, 10)           20000     
+_________________________________________________________________
+dropout (Dropout)            (None, 500, 10)           0         
+_________________________________________________________________
+global_average_pooling1d (Gl (None, 10)                0         
+_________________________________________________________________
+dropout_1 (Dropout)          (None, 10)                0         
+_________________________________________________________________
+dense (Dense)                (None, 32)                352       
+_________________________________________________________________
+fake (Dense)                 (None, 2)                 66        
+=================================================================
+Total params: 20,418
+Trainable params: 20,418
+Non-trainable params: 0
+_________________________________________________________________
+</code></pre>
+<h4>Train the First Model</h4>
+<p>We are ready to train our first model. Training a model requires both compiling the model and fitting the training data inside the model. So, firstly, let's compile it.</p>
+<pre><code class="language-python">model_title.compile(optimizer = &quot;adam&quot;,
+              loss = losses.SparseCategoricalCrossentropy(from_logits = True),
+              metrics = [&quot;accuracy&quot;]
+)
+</code></pre>
+<p>Then, we need to fit the training data, train, defined above to our model.</p>
+<pre><code class="language-python">history_title = model_title.fit(train, 
+                                epochs = 50, 
+                                validation_data = val, 
+                                verbose = False)
+</code></pre>
+<h4>Visualize Accuracy</h4>
+<p>Finally, we are going to use a graph to plot the training accuracy and validation accuracy at each epoch. Before plotting, we need to import <code>matplotlib</code>.</p>
+<pre><code class="language-python"># import matplotlib for plotting
+from matplotlib import pyplot as plt
+</code></pre>
+<pre><code class="language-python"># get the final validation accuracy
+val_acc = round(history_title.history[&quot;val_accuracy&quot;][-1], 5)
+# plot both the training accuracy and validation accuracy
+plt.plot(history_title.history[&quot;accuracy&quot;], label = &quot;training&quot;)
+plt.plot(history_title.history[&quot;val_accuracy&quot;], label = &quot;validation&quot;)
+# add title, xlabel, and ylabel
+plt.gca().set(xlabel = &quot;epoch&quot;, ylabel = &quot;accuracy&quot;, title = &quot;First Model by Title with Validation Accuracy: &quot; + str(val_acc))
+plt.legend()
+</code></pre>
+<p>![png]({{ site.baseurl }}/images/Blog3_revise_files/Blog3_revise_54_1.png)</p>
+
+<p>From the above graph, we can see that the validation accuracy by our first model is about 0.93822, which is not too high. Since we use <code>Dropout</code> when writing the pipeline, our model avoids overfitting. Let's continue to create the second and the third model and see whether we will get a higher accuracy for those two models.</p>
+<h3>Second Model: use only <code>text</code></h3>
+<h4>Write the Pipeline</h4>
+<p>Similarly, we are going to construct the second model by using the same layers as the first model. We will also use the <code>shared_embedding</code> defined above.</p>
+<pre><code class="language-python"># create the following layers one by one
+text_features = vectorize_layer(text_input)
+text_features = shared_embedding(text_features)
+text_features = layers.Dropout(0.2)(text_features)
+text_features = layers.GlobalAveragePooling1D()(text_features)
+text_features = layers.Dropout(0.2)(text_features)
+text_features = layers.Dense(32, activation = 'relu')(text_features)
+# output layer
+output_text = layers.Dense(2, name = &quot;fake&quot;)(text_features)
+</code></pre>
+<h4>Create the Second Model</h4>
+<p>Let's create the model by specifying the input, text_input, and output in the following cell.</p>
+<pre><code class="language-python">model_text = keras.Model(
+    inputs = [text_input],
+    outputs = output_text
+)
+</code></pre>
+<p>Let's also see the summary of the layers in our second model.</p>
+<pre><code class="language-python">model_text.summary()
+</code></pre>
+<pre><code>Model: &quot;model_1&quot;
+_________________________________________________________________
+Layer (type)                 Output Shape              Param #   
+=================================================================
+text (InputLayer)            [(None, 1)]               0         
+_________________________________________________________________
+text_vectorization_1 (TextVe (None, 500)               0         
+_________________________________________________________________
+embedding (Embedding)        (None, 500, 10)           20000     
+_________________________________________________________________
+dropout_2 (Dropout)          (None, 500, 10)           0         
+_________________________________________________________________
+global_average_pooling1d_1 ( (None, 10)                0         
+_________________________________________________________________
+dropout_3 (Dropout)          (None, 10)                0         
+_________________________________________________________________
+dense_1 (Dense)              (None, 32)                352       
+_________________________________________________________________
+fake (Dense)                 (None, 2)                 66        
+=================================================================
+Total params: 20,418
+Trainable params: 20,418
+Non-trainable params: 0
+_________________________________________________________________
+</code></pre>
+<p>We might find out that the layers in the second model are similar to the layers in the first model. This is because we used a similar pipeline to construct these two models.</p>
+<h4>Train the Second Model</h4>
+<p>Before fitting the training data into the model, we need to compile.</p>
+<pre><code class="language-python"># compile first
+model_text.compile(optimizer = &quot;adam&quot;,
+              loss = losses.SparseCategoricalCrossentropy(from_logits = True),
+              metrics = [&quot;accuracy&quot;]
+)
+</code></pre>
+<pre><code class="language-python">history_text = model_text.fit(train, 
+                              epochs = 50, 
+                              validation_data = val,
+                              verbose = False)
+</code></pre>
+<p>Now, our second model has been created, and we are ready to visualize the accuracy of our model in the next step.</p>
+<h4>Visualize Accuracy</h4>
+<pre><code class="language-python"># get the final validation accuracy
+val_acc = round(history_text.history[&quot;val_accuracy&quot;][-1], 5)
+# plot both the training accuracy and validation accuracy
+plt.plot(history_text.history[&quot;accuracy&quot;], label = &quot;training&quot;)
+plt.plot(history_text.history[&quot;val_accuracy&quot;], label = &quot;validation&quot;)
+# add title, xlabel, and ylabel
+plt.gca().set(xlabel = &quot;epoch&quot;, ylabel = &quot;accuracy&quot;, title = &quot;Second Model by Text with Validation Accuracy: &quot; + str(val_acc))
+plt.legend()
+</code></pre>
+<p>![png]({{ site.baseurl }}/images/Blog3_revise_files/Blog3_revise_72_1.png)</p>
+<p>Based on the above graph, it shows that our second model has a higher validation accuracy, which is 0.99348, than the first model. Since we used <code>Dropout</code> to avoid overfitting, our second model by using the same-structure layers as the first model is great.</p>
+<h3>Third Model: use both <code>title</code> and <code>text</code></h3>
+<p>In this part, we are going to construct our third model, which uses both <code>title</code> and <code>text</code>, by using the <code>concatenate</code> tool. Since we already have the inputs, let's continue to write the pipeline for our third model.</p>
+<h4>Concatenation</h4>
+<p>We are going to <code>concatenate</code> the <code>title_features</code> pipeline with the <code>text_features</code> pipeline.</p>
+<pre><code class="language-python">main = layers.concatenate([title_features, text_features], axis = 1)
+</code></pre>
+<h4>Create the Third Model</h4>
+<p>Let's do some additional modifications by passing the consolidated set of computed features through a few more Dense layers, shown below.</p>
+<pre><code class="language-python">main = layers.Dense(32, activation = &quot;relu&quot;)(main)
+output = layers.Dense(2, name = &quot;fake&quot;)(main)
+</code></pre>
+<p>Let's specify the input, title_input and text_input, and output to our third model in the following cell.</p>
+<pre><code class="language-python">model = keras.Model(
+    inputs = [title_input, text_input],
+    outputs = output
+)
+</code></pre>
+<pre><code class="language-python">model.summary()
+</code></pre>
+<pre><code>Model: &quot;model_2&quot;
+__________________________________________________________________________________________________
+Layer (type)                    Output Shape         Param #     Connected to                     
+==================================================================================================
+title (InputLayer)              [(None, 1)]          0                                            
+__________________________________________________________________________________________________
+text (InputLayer)               [(None, 1)]          0                                            
+__________________________________________________________________________________________________
+text_vectorization_1 (TextVecto (None, 500)          0           title[0][0]                      
+                                                                 text[0][0]                       
+__________________________________________________________________________________________________
+embedding (Embedding)           (None, 500, 10)      20000       text_vectorization_1[0][0]       
+                                                                 text_vectorization_1[1][0]       
+__________________________________________________________________________________________________
+dropout (Dropout)               (None, 500, 10)      0           embedding[0][0]                  
+__________________________________________________________________________________________________
+dropout_2 (Dropout)             (None, 500, 10)      0           embedding[1][0]                  
+__________________________________________________________________________________________________
+global_average_pooling1d (Globa (None, 10)           0           dropout[0][0]                    
+__________________________________________________________________________________________________
+global_average_pooling1d_1 (Glo (None, 10)           0           dropout_2[0][0]                  
+__________________________________________________________________________________________________
+dropout_1 (Dropout)             (None, 10)           0           global_average_pooling1d[0][0]   
+__________________________________________________________________________________________________
+dropout_3 (Dropout)             (None, 10)           0           global_average_pooling1d_1[0][0] 
+__________________________________________________________________________________________________
+dense (Dense)                   (None, 32)           352         dropout_1[0][0]                  
+__________________________________________________________________________________________________
+dense_1 (Dense)                 (None, 32)           352         dropout_3[0][0]                  
+__________________________________________________________________________________________________
+concatenate (Concatenate)       (None, 64)           0           dense[0][0]                      
+                                                                 dense_1[0][0]                    
+__________________________________________________________________________________________________
+dense_2 (Dense)                 (None, 32)           2080        concatenate[0][0]                
+__________________________________________________________________________________________________
+fake (Dense)                    (None, 2)            66          dense_2[0][0]                    
+==================================================================================================
+Total params: 22,850
+Trainable params: 22,850
+Non-trainable params: 0
+__________________________________________________________________________________________________
+</code></pre>
+<p>From the above summary of our third model, we might find out that there exist similar layers compared to our first model and second model. This helps us to understand again how our third model is created -- <code>concatenate</code> the <code>title_features</code> pipeline with the <code>text_features</code> pipeline.</p>
+<h4>Train the Third Model</h4>
+<p>Again, we need to compile before fitting the training data into the model.</p>
+<pre><code class="language-python">model.compile(optimizer = &quot;adam&quot;,
+              loss = losses.SparseCategoricalCrossentropy(from_logits = True),
+              metrics = [&quot;accuracy&quot;]
+)
+</code></pre>
+<pre><code class="language-python">history = model.fit(train, 
+                    epochs = 50, 
+                    validation_data = val, 
+                    verbose = False)
+</code></pre>
+<h4>Visualize Accuracy</h4>
+<p>Now, we are ready to visualize both the validation accuracy and the training accuracy for each epoch to see whether our model is good.</p>
+<pre><code class="language-python"># get the final validation accuracy
+val_acc = round(history.history[&quot;val_accuracy&quot;][-1], 5)
+# plot both the training accuracy and validation accuracy
+plt.plot(history.history[&quot;accuracy&quot;], label = &quot;training&quot;)
+plt.plot(history.history[&quot;val_accuracy&quot;], label = &quot;validation&quot;)
+# add title, xlabel, and ylabel
+plt.gca().set(xlabel = &quot;epoch&quot;, ylabel = &quot;accuracy&quot;, title = &quot;Third Model by Title and Text with Validation Accuracy: &quot; + str(val_acc))
+plt.legend()
+</code></pre>
+<p>![png]({{ site.baseurl }}/images/Blog3_revise_files/Blog3_revise_92_1.png)</p>
+<p>Based on the graph above, our third model reaches a validation accuracy of about 0.99978, which is very high. Since we used <code>Dropout</code> in the pipelines for both <code>title_features_third</code> and <code>text_features_third</code>, our third model does not have overfitting problems.</p>
+<h3>Mode Comparisons</h3>
+<p>In general, the first model has a validation accuracy of about 0.93822; the second model has a validation accuracy of about 0.99348; and the third model has a validation accuracy of about 0.99978. Since all the models prevent overfitting, the third model is the best. Hence, I think the algorithms should use both the title and the text when seeking to detect fake news.</p>
+
+<h2>Model Evaluation</h2>
+<p>In this section, we are going to use the test data to evaluate our best model, the third model, to answer the following question:</p>
+<blockquote>
+<p>If we used our best model as a fake news detector, how often would we be right?</p>
+</blockquote>
+<p>Similar to what we did when importing the training data at the beginning of this blog post, we are going to import the test data from</p>
+<p><a href="https://github.com/PhilChodrow/PIC16b/blob/master/datasets/fake_news_test.csv?raw=true">https://github.com/PhilChodrow/PIC16b/blob/master/datasets/fake_news_test.csv?raw=true</a></p>
+<p>Let's import the csv file I have downloaded following the link above to a <code>test_data</code> dataframe by pandas package.</p>
+<pre><code class="language-python"># import fake_news_test.csv into a DataFrame called test_data
+test_data = pd.read_csv(&quot;fake_news_test.csv&quot;)
+</code></pre>
+<p>Then, let's use the <code>make_dataset</code> function to our <code>test_data</code>.</p>
+<pre><code class="language-python">test_ds = make_dataset(test_data)
+</code></pre>
+<p>Now, let's evaualte our best model by the test_ds.</p>
+<pre><code class="language-python">model.evaluate(test_ds)
+</code></pre>
+<pre><code>225/225 [==============================] - 1s 5ms/step - loss: 0.1200 - accuracy: 0.9816
+[0.11995154619216919, 0.9816027283668518]
+</code></pre>
+<p>Based on the above output, it shows that our best model as a fake news detector predicts with about 98.2% accuracy, which is high. Thus, this proves again that our third model is great.</p>
+<h2>Embedding Visualization</h2>
+<p>In the last section, we are going to make embedding visualization of our model. By plotting graphs of different words in points, we are able to know what kinds of words are usually have similar meaning and tend to be used in real news articles and fake news articles. In order to plot a relevant graph, we are going to use the embedding layer in our best model to calculate <code>weights</code> and than get the <code>vocabulary</code>.</p>
+<pre><code class="language-python">weights = model.get_layer('embedding').get_weights()[0]
+vocab = vectorize_layer.get_vocabulary()
+# import PCA reduce the dimension down to a visualizable number
+from sklearn.decomposition import PCA
+pca = PCA(n_components = 2)
+weights = pca.fit_transform(weights)
+</code></pre>
+<p>We are going to create a dataframe called <code>embedding_df</code> about the results about <code>vocabulary</code> and <code>weights</code> above. This dataframe will be used in plotting in the last step.</p>
+<pre><code class="language-python">embedding_df = pd.DataFrame({
+    'word' : vocab, 
+    'x0'   : weights[:,0],
+    'x1'   : weights[:,1]
+})
+embedding_df
+</code></pre>
+<div class="table-wrapper">
+	<style scoped>
+		.dataframe tbody tr th:only-of-type {
+			vertical-align: middle;
+		}
+	
+		.dataframe tbody tr th {
+			vertical-align: top;
+		}
+	
+		.dataframe thead th {
+			text-align: right;
+		}
+	</style>
+	<table border="1" class="dataframe alt">
+	  <thead>
+		<tr style="text-align: right;">
+		  <th></th>
+		  <th>word</th>
+		  <th>x0</th>
+		  <th>x1</th>
+		</tr>
+	  </thead>
+	  <tbody>
+		<tr>
+		  <th>0</th>
+		  <td></td>
+		  <td>-0.232555</td>
+		  <td>0.176622</td>
+		</tr>
+		<tr>
+		  <th>1</th>
+		  <td>[UNK]</td>
+		  <td>-0.187082</td>
+		  <td>0.124137</td>
+		</tr>
+		<tr>
+		  <th>2</th>
+		  <td>s</td>
+		  <td>-0.206853</td>
+		  <td>0.833015</td>
+		</tr>
+		<tr>
+		  <th>3</th>
+		  <td>trump</td>
+		  <td>-0.219647</td>
+		  <td>0.032457</td>
+		</tr>
+		<tr>
+		  <th>4</th>
+		  <td>said</td>
+		  <td>-3.730632</td>
+		  <td>0.383721</td>
+		</tr>
+		<tr>
+		  <th>...</th>
+		  <td>...</td>
+		  <td>...</td>
+		  <td>...</td>
+		</tr>
+		<tr>
+		  <th>1995</th>
+		  <td>suffered</td>
+		  <td>-0.618630</td>
+		  <td>1.402475</td>
+		</tr>
+		<tr>
+		  <th>1996</th>
+		  <td>basically</td>
+		  <td>3.909034</td>
+		  <td>0.414360</td>
+		</tr>
+		<tr>
+		  <th>1997</th>
+		  <td>regular</td>
+		  <td>-1.900339</td>
+		  <td>-1.296854</td>
+		</tr>
+		<tr>
+		  <th>1998</th>
+		  <td>projects</td>
+		  <td>1.243296</td>
+		  <td>-0.185288</td>
+		</tr>
+		<tr>
+		  <th>1999</th>
+		  <td>firms</td>
+		  <td>-2.884571</td>
+		  <td>0.157406</td>
+		</tr>
+	  </tbody>
+	</table>
+	<p>2000 rows × 3 columns</p>
+	</div>
+<p>Now, we are ready to create an interactive plotly scatterplot to visualize embedding of our best model, where each point represents a word.</p>
+<pre><code class="language-python"># import packages for embedding visualization
+import numpy as np
+import plotly.express as px 
+# plot an interactive plotly scatterplot
+fig = px.scatter(embedding_df, 
+                 x = &quot;x0&quot;, 
+                 y = &quot;x1&quot;, 
+                 size = list(np.ones(len(embedding_df))),
+                 size_max = 2,
+                 hover_name = &quot;word&quot;)
+# show the figure
+fig.show()
+</code></pre>
+<iframe src="includes/Embedding_Visualization.html" width="100%" height="800"></iframe>
+<pre><code class="language-python"># use to save the output interactive graph by plotly as a html file
+from plotly.io import write_html
+# save the output in a html file
+write_html(fig, &quot;Embedding_Visualization.html&quot;)
+</code></pre>
+<p>From the graph above, we might find out that the points are gathering at the center and trying to spreading out a little bit more horizontally. By checking for the hovering name of each point, we might find out that some words, such as some words close to the center, have more &quot;controversial&quot; and &quot;aggressive&quot; meanings than the others. This is reasonable since words that are used more frequently in the fake news articles stay together based on the goal of our model.</p>
+<p>That's the end of this blog post. Thank you for reading!</p>
+
+							
+			
+			
+					</section>
+					</div>
+
+				<!-- Footer -->
+					<footer id="footer">
+						<section>
+							<h2>Techniques</h2>
+							<p> Python &bull; Pandas &bull; Plotly &bull; PCA &bull; Deep Learning &bull; Classification &bull; Embedding &bull; TensorFlow &bull; nltk &bull; Scikit-Learn
+							</p>
+							<ul class="actions">
+								<li><a href="index.html" class="button">Go To Main</a></li>
+							</ul>
+						</section>
+						<section>
+							<h2>Contact</h2>
+							<dl class="alt">
+								<dt>Address</dt>
+								<dd>Chicago, IL &bull; Los Angeles, CA</dd>
+								<dt>Phone</dt>
+								<dd>(424) 407-6619</dd>
+								<dt>Email</dt>
+								<dd><a href="#">jingxuanzhang@uchicago.edu</a></dd>
+							</dl>
+							<ul class="icons">
+								<li><a href="https://www.linkedin.com/in/stancyzhang/" class="icon brands fa-linkedin alt"><span class="label">LinkedIn</span></a></li>
+								<li><a href="https://github.com/StancyZhang" class="icon brands fa-github alt"><span class="label">GitHub</span></a></li>
+							</ul>
+						</section>
+						<p class="copyright">&copy; Stancy Portfolio. Design: <a href="https://html5up.net">HTML5 UP</a>.</p>
+					</footer>
+
+			</div>
+
+		<!-- Scripts -->
+			<script src="assets/js/jquery.min.js"></script>
+			<script src="assets/js/jquery.scrollex.min.js"></script>
+			<script src="assets/js/jquery.scrolly.min.js"></script>
+			<script src="assets/js/browser.min.js"></script>
+			<script src="assets/js/breakpoints.min.js"></script>
+			<script src="assets/js/util.js"></script>
+			<script src="assets/js/main.js"></script>
+
+	</body>
+</html>

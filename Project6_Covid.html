@@ -1,0 +1,299 @@
+<!DOCTYPE HTML>
+<!--
+	Stellar by HTML5 UP
+	html5up.net | @ajlkn
+	Free for personal and commercial use under the CCA 3.0 license (html5up.net/license)
+-->
+<html>
+	<head>
+		<title>Stancy Zhang</title>
+    <script type="text/x-mathjax-config">
+			MathJax.Hub.Config({tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}});
+		  </script>
+		  <script type="text/javascript"
+			src="http://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
+		  </script>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
+		<link rel="stylesheet" href="assets/css/main.css" />
+		<noscript><link rel="stylesheet" href="assets/css/noscript.css" /></noscript>
+	</head>
+	<body class="is-preload">
+
+		<!-- Wrapper -->
+			<div id="wrapper">
+
+				<!-- Header -->
+					<header id="header">
+						<h1>Economic Echoes of a Health Crisis</h1>
+						<h2>Analyzing Dow Jones in the Wake of COVID-19.</h2>
+						<p>Feburary 2021</p>
+						<a href="index.html" class="button">Go To Main</a>
+					</header>
+
+				<!-- Main -->
+					<div id="main">
+
+						<!-- Content -->
+							<section id="content" class="main">
+								<h2>Goal</h2>
+								<p>Juxtaposing the ebb and flow of the US stock market, represented by the Dow Jones Industrial Average, with the unfolding crisis of the COVID-19 pandemic, this analysis provides a unique perspective. By converting cumulative COVID-19 case data into a daily case count metric, we aim to unveil the synchronicities or disparities between economic performance and the public health landscape during these unprecedented times.</p>
+								<h3>Import the Data</h3>
+<p>Run the following code to download two time series data sets:</p>
+<ul>
+<li>Historical data on the Dow Jones Industrial Average (a composite performance measure of the US stock market), retrieved from Yahoo Finance.</li>
+<li>Cumulative COVID19 cases over time, from the <a href="https://github.com/nytimes/covid-19-data">New York Times</a>.</li>
+</ul>
+<pre><code class="language-python">import pandas as pd
+import datetime
+
+url = &quot;https://query1.finance.yahoo.com/v7/finance/download/%5EDJI?period1=1580750232&amp;period2=1612372632&amp;interval=1d&amp;events=history&amp;includeAdjustedClose=true&quot;
+DJI = pd.read_csv(url)
+DJI['date'] = pd.to_datetime(DJI['Date'])
+DJI = DJI.drop([&quot;Date&quot;], axis = 1)
+DJI.head()
+</code></pre>
+
+<div class="table-wrapper">
+	<style scoped>
+		.dataframe tbody tr th:only-of-type {
+			vertical-align: middle;
+		}
+	
+		.dataframe tbody tr th {
+			vertical-align: top;
+		}
+	
+		.dataframe thead th {
+			text-align: right;
+		}
+	</style>
+	<table border="1" class="dataframe alt">
+	  <thead>
+		<tr style="text-align: right;">
+			<th></th>
+      <th>Open</th>
+      <th>High</th>
+      <th>Low</th>
+      <th>Close</th>
+      <th>Adj Close</th>
+      <th>Volume</th>
+      <th>date</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>28319.650391</td>
+      <td>28630.390625</td>
+      <td>28319.650391</td>
+      <td>28399.810547</td>
+      <td>28399.810547</td>
+      <td>307910000</td>
+      <td>2020-02-03</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>28696.740234</td>
+      <td>28904.880859</td>
+      <td>28696.740234</td>
+      <td>28807.630859</td>
+      <td>28807.630859</td>
+      <td>332750000</td>
+      <td>2020-02-04</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>29048.730469</td>
+      <td>29308.890625</td>
+      <td>29000.849609</td>
+      <td>29290.849609</td>
+      <td>29290.849609</td>
+      <td>357540000</td>
+      <td>2020-02-05</td>
+    </tr>
+    <tr>
+      <th>3</th>
+      <td>29388.580078</td>
+      <td>29408.050781</td>
+      <td>29246.929688</td>
+      <td>29379.769531</td>
+      <td>29379.769531</td>
+      <td>263700000</td>
+      <td>2020-02-06</td>
+    </tr>
+    <tr>
+      <th>4</th>
+      <td>29286.919922</td>
+      <td>29286.919922</td>
+      <td>29056.980469</td>
+      <td>29102.509766</td>
+      <td>29102.509766</td>
+      <td>252860000</td>
+      <td>2020-02-07</td>
+    </tr>
+	  </tbody>
+	</table>
+</div>
+
+<p></p>
+<pre><code class="language-python">url = &quot;https://raw.githubusercontent.com/nytimes/covid-19-data/master/us.csv&quot;
+COVID = pd.read_csv(url)
+COVID['date'] = pd.to_datetime(COVID['date'])
+COVID.head()
+</code></pre>
+
+<div class="table-wrapper">
+	<style scoped>
+		.dataframe tbody tr th:only-of-type {
+			vertical-align: middle;
+		}
+	
+		.dataframe tbody tr th {
+			vertical-align: top;
+		}
+	
+		.dataframe thead th {
+			text-align: right;
+		}
+	</style>
+	<table border="1" class="dataframe alt">
+	  <thead>
+		<tr style="text-align: right;">
+			<th></th>
+      <th>date</th>
+      <th>cases</th>
+      <th>deaths</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>2020-01-21</td>
+      <td>1</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>2020-01-22</td>
+      <td>1</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>2020-01-23</td>
+      <td>1</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <th>3</th>
+      <td>2020-01-24</td>
+      <td>2</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <th>4</th>
+      <td>2020-01-25</td>
+      <td>3</td>
+      <td>0</td>
+    </tr>
+	  </tbody>
+	</table>
+</div>
+
+
+<h3>Reshape the data</h3>
+<p>The series <code>COVID['cases']</code> is essentially a <code>numpy</code> array containing the cumulative case counts over time. The COVID19 case data  is cumulative, but we would like to see the number of new cases per day. Construct a new array, called <code>per_day</code>, giving the number of new cases per day. Then, make a new array called <code>per_day_date</code> that gives the appropriate date for each case count. In particular, <code>per_day</code> and <code>per_day_date</code> should have the same shape.</p>
+<pre><code class="language-python">per_day = np.diff(COVID[&quot;cases&quot;]) # use np.diff function to find out the the number of new cases per day
+per_day_date = COVID[&quot;date&quot;].loc[1:] # select all the dates except for the day with index 0
+</code></pre>
+<h3>Plot the Dow Jones Industrial Average over time &amp; Plot the variables <code>per_day_date</code> and <code>per_day</code> to visualize the progress of the COVID19 pandemic over time.</h3>
+<pre><code class="language-python"># your solution here
+# modify this block in the remaining parts of the problem
+
+# create 2 empty subplots on the same column and use sharex to make two subplots share the same horizontal axis
+fig, ax = plt.subplots(2, 1, sharex = True)
+ax[0].plot(DJI[&quot;date&quot;], DJI[&quot;Close&quot;]) # make the upper subplot have data of &quot;date&quot; and &quot;Close&quot; from DJI dataframe
+ax[1].plot(per_day_date, per_day, color = &quot;red&quot;) # make the lower subplot have data of per_day_date and per_day
+
+ax[0].set(ylabel = &quot;DJI&quot;) # add &quot;DJI Close&quot; as y-label on the upper subplot
+ax[1].set(xlabel = &quot;Date&quot;, ylabel = &quot;COVID new cases per day&quot;) # add &quot;Date&quot; as x-label and &quot;COVID new cases per day&quot; as y-label of the lower subplot
+
+# DJI starts to decrease
+ax[0].axvspan(datetime.datetime(2020,3,1),
+              datetime.datetime(2020,3,20), 
+              alpha = .3, 
+              color = &quot;gray&quot;)
+# DJI during Black Friday
+ax[0].axvspan(datetime.datetime(2020,11,20),
+              datetime.datetime(2020,11,30), 
+              alpha = .3, 
+              color = &quot;gray&quot;)
+# COVID starts in the U.S.
+ax[1].axvspan(datetime.datetime(2020,2,15),
+              datetime.datetime(2020,4,1), 
+              alpha = .3, 
+              color = &quot;gray&quot;)
+
+ax[0].text(datetime.datetime(2020,2,28), 
+           28000, 
+           &quot;DJI reaches\nthe lowest&quot;)
+ax[0].text(datetime.datetime(2020,11,1), 
+           23000, 
+           &quot;DJI during\nBlack Friday&quot;)
+ax[1].text(datetime.datetime(2020,2,1), 
+           70000, 
+           &quot;COVID starts\nin the U.S.&quot;)
+
+ax[0].set(title = &quot;Time vs. DJI &amp; Covid&quot;)
+plt.tight_layout() # avoid squished plots
+</code></pre>
+<p><img src="/images/covid_time_series/output_5_0.png" alt="png"></p>
+
+							
+			
+			
+					</section>
+					</div>
+
+				<!-- Footer -->
+					<footer id="footer">
+						<section>
+							<h2>Techniques</h2>
+							<p> Python &bull; Pandas &bull; NumPy &bull; Stock &bull; Covid-19 &bull; Time Series
+							</p>
+							<ul class="actions">
+								<li><a href="index.html" class="button">Go To Main</a></li>
+							</ul>
+						</section>
+						<section>
+							<h2>Contact</h2>
+							<dl class="alt">
+								<dt>Address</dt>
+								<dd>Chicago, IL &bull; Los Angeles, CA</dd>
+								<dt>Phone</dt>
+								<dd>(424) 407-6619</dd>
+								<dt>Email</dt>
+								<dd><a href="#">jingxuanzhang@uchicago.edu</a></dd>
+							</dl>
+							<ul class="icons">
+								<li><a href="https://www.linkedin.com/in/stancyzhang/" class="icon brands fa-linkedin alt"><span class="label">LinkedIn</span></a></li>
+								<li><a href="https://github.com/StancyZhang" class="icon brands fa-github alt"><span class="label">GitHub</span></a></li>
+							</ul>
+						</section>
+						<p class="copyright">&copy; Stancy Portfolio. Design: <a href="https://html5up.net">HTML5 UP</a>.</p>
+					</footer>
+
+			</div>
+
+		<!-- Scripts -->
+			<script src="assets/js/jquery.min.js"></script>
+			<script src="assets/js/jquery.scrollex.min.js"></script>
+			<script src="assets/js/jquery.scrolly.min.js"></script>
+			<script src="assets/js/browser.min.js"></script>
+			<script src="assets/js/breakpoints.min.js"></script>
+			<script src="assets/js/util.js"></script>
+			<script src="assets/js/main.js"></script>
+
+	</body>
+</html>

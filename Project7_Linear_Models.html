@@ -1,0 +1,711 @@
+<!DOCTYPE HTML>
+<!--
+	Stellar by HTML5 UP
+	html5up.net | @ajlkn
+	Free for personal and commercial use under the CCA 3.0 license (html5up.net/license)
+-->
+<html>
+	<head>
+		<title>Stancy Zhang</title>
+		<script type="text/x-mathjax-config">
+			MathJax.Hub.Config({tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}});
+		  </script>
+		  <script type="text/javascript"
+			src="http://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
+		  </script>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
+		<link rel="stylesheet" href="assets/css/main.css" />
+		<noscript><link rel="stylesheet" href="assets/css/noscript.css" /></noscript>
+	</head>
+	<body class="is-preload">
+
+		<!-- Wrapper -->
+			<div id="wrapper">
+
+				<!-- Header -->
+					<header id="header">
+						<h1>Linear Models</h1>
+						<h2>Handcrafting Ridge & Lasso Regressions to Dissect Errors.</h2>
+						<p>October 2022</p>
+						<a href="index.html" class="button">Go To Main</a>
+					</header>
+
+				<!-- Main -->
+					<div id="main">
+
+						<!-- Content -->
+							<section id="content" class="main">
+								<h2>Goal</h2>
+								<p>Diving into the intricate universe of linear modeling, this study handcrafts Ridge and Lasso regressions to shed light on their inner workings. By designing these models from scratch and meticulously contrasting their performance, we unravel the intricacies of their error landscapes, offering a comprehensive understanding of how each regression uniquely interprets data.</p>
+								<h2>Import packages</h2>
+<pre><code class="language-python">import numpy as np
+import matplotlib.pyplot as plt
+import scipy.linalg as la
+from time import time
+import scipy.optimize as opt
+</code></pre>
+<h2>Linear Models</h2>
+<p>A standard problem in statistics to solve the multivariate linear regression problem.
+\begin{equation}
+y = X * \beta + \epsilon
+\end{equation}
+The above notation is standard in statistics, but in our discussion (and codes) we will replace $\beta$ with <code>b</code></p>
+<pre><code>y = X * b + eps.
+</code></pre>
+<p><code>X</code> is known as the <a href="https://en.wikipedia.org/wiki/Design_matrix">design matrix</a>, and consists of <code>n</code> rows of observations, each of which has <code>p</code> features (so it is an $n\times p$ matrix).  <code>y</code> is a vector of <code>n</code> responses.  <code>b</code> is an unknown vector of <code>p</code> coefficients which we would like to find.  <code>eps</code> (epsilon) is a vector of length <code>n</code> with random noise, typically i.i.d. normally distributed with variance <code>sig</code> (sigma).</p>
+<p>In numpy notation, we could express this as</p>
+<pre><code class="language-python">y[i] = np.dot(X[i], b) + sig * np.random.randn()
+</code></pre>
+<p>We want to determine <code>b</code>, so that when me make a new observation <code>X[n]</code> we can predict the response <code>y[n]</code>.  One way to do this is to minimize the mean square error</p>
+<p>\begin{equation}
+\mathop{\mathsf{minimize}}_b \mathbb{E}((X[n]*b - y[n])^2)
+\end{equation}</p>
+<p>The solution to this is the solution to the least squares problem
+\begin{equation}
+\mathop{\mathsf{minimize}}_b \frac{1}{n} |X*b - y|_2^2
+\end{equation}</p>
+<p>Where $n$ is the number of rows in $X$.  We'll let the solution to the problem be denoted $\hat{b}$, or <code>bhat</code>.</p>
+<h3>Generating Data</h3>
+<pre><code class="language-python">def gen_lstsq(n, p, sig=0.1):
+    &quot;&quot;&quot;
+    Generate a linear least squares problem.
+    
+    Input
+    ----------
+    n: an integer represents number of rows of observations
+    p: an integer represents number of features
+    sig=0.1: a number represents variance decides random noise with default 0.1
+    
+    Output
+    ----------
+    X: nxp numpy matrix in random numbers
+    y: nx1 numpy vector
+    b: px1 numpy vector in random numbers
+    &quot;&quot;&quot;
+    # generate nxp matrix X and px1 vector b
+    X = np.random.randn(n, p)
+    b = np.random.randn(p)
+    # use the formula above: y = X * b + eps
+    y = np.dot(X, b) + sig * np.random.randn(n)
+    return X, y, b
+</code></pre>
+<h3>QR factorization</h3>
+<p>If we form a QR factorization $X = QR$, we can find $\hat{b} = R^{-1} Q^T y$.</p>
+<pre><code class="language-python">def solve_lstsq_qr(X, y):
+    &quot;&quot;&quot;
+    Estimate b using the QR factorization.
+    Codes are similar to the reader lecture notes,
+    based on least squares solution ||y - X * b_hat||.
+    
+    Input
+    ----------
+    X: nxp numpy matrix in random numbers
+    y: nx1 numpy vector
+    
+    Output
+    ----------
+    bhat: px1 numpy vector
+    &quot;&quot;&quot;
+    # QR factorization
+    Q, R = la.qr(X, mode='economic')
+    # estimate b
+    bhat = la.solve_triangular(R, Q.T @ y, lower=False)
+    return bhat
+</code></pre>
+<h3>Normal Equations</h3>
+<p>Often, this is the way statistics textbooks solve the problem: $\hat{b} = (X^T X)^{-1} X^T y$.  This is based on the normal equation $X^T X \hat{b} = X^T y$.</p>
+<pre><code class="language-python">def solve_lstsq_normal(X, y):
+    &quot;&quot;&quot;
+    Estimate b using the normal equations, involving Cholesky factorization.
+    
+    Input
+    ----------
+    X: nxp numpy matrix in random numbers
+    y: nx1 numpy vector
+    
+    Output
+    ----------
+    bhat: px1 numpy vector
+    &quot;&quot;&quot;
+    # form Cholesky factorization
+    L = np.linalg.cholesky(X.T @ X)
+    # estimate b
+    bhat = la.solve_triangular(L.T, 
+                            la.solve_triangular(L, X.T @ y, lower=True),
+                            lower=False)
+    return bhat
+</code></pre>
+<h3>Check the functions</h3>
+<p>We can generate a few random problems to test that <code>solve_lstsq_qr</code> and <code>solve_lstsq_normal</code> give the same prediction $\hat{b}$ (measure $|\hat{b}<em>{qr} - \hat{b}</em>{normal}|_2$ and check it is smaller than <code>1e-4</code>). Check against <code>solve_lstsq</code> in numpy or scipy as well.</p>
+<pre><code class="language-python"># first test
+n = 300
+p = 100
+X, y, b = gen_lstsq(n, p, sig=0.1)
+b_QR = solve_lstsq_qr(X, y)
+b_normal = solve_lstsq_normal(X, y)
+# measure the norm
+la.norm(b_QR - b_normal) &lt; 1e-4
+</code></pre>
+<pre><code>True
+</code></pre>
+<pre><code class="language-python"># calculate solve_lstsq
+b_scipy = la.lstsq(X, y)[0]
+# measure the difference: QR estimation
+la.norm(b_scipy - b_QR) &lt; 1e-4
+</code></pre>
+<pre><code>True
+</code></pre>
+<pre><code class="language-python"># measure the difference: normal estimation
+la.norm(b_scipy - b_normal) &lt; 1e-4
+</code></pre>
+<pre><code>True
+</code></pre>
+<pre><code class="language-python">n = 300
+p = 100
+X, y, b = gen_lstsq(n, p, sig=0.1)
+b_QR = solve_lstsq_qr(X, y)
+b_normal = solve_lstsq_normal(X, y)
+# measure the norm
+la.norm(b_QR - b_normal) &lt; 1e-4
+</code></pre>
+<pre><code>True
+</code></pre>
+<pre><code class="language-python"># calculate solve_lstsq
+b_scipy = la.lstsq(X, y)[0]
+# measure the difference: QR estimation
+la.norm(b_scipy - b_QR) &lt; 1e-4
+</code></pre>
+<pre><code>True
+</code></pre>
+<pre><code class="language-python"># measure the difference: normal estimation
+la.norm(b_scipy - b_normal) &lt; 1e-4
+</code></pre>
+<pre><code>True
+</code></pre>
+<pre><code class="language-python"># second test
+n = 150
+p = 70
+X, y, b = gen_lstsq(n, p, sig=0.1)
+b_QR = solve_lstsq_qr(X, y)
+b_normal = solve_lstsq_normal(X, y)
+# measure the norm
+la.norm(b_QR - b_normal) &lt; 1e-4
+</code></pre>
+<pre><code>True
+</code></pre>
+<pre><code class="language-python"># calculate solve_lstsq
+b_scipy = la.lstsq(X, y)[0]
+# measure the difference: QR estimation
+la.norm(b_scipy - b_QR) &lt; 1e-4
+</code></pre>
+<pre><code>True
+</code></pre>
+<pre><code class="language-python"># measure the difference: normal estimation
+la.norm(b_scipy - b_normal) &lt; 1e-4
+</code></pre>
+<pre><code>True
+</code></pre>
+<pre><code class="language-python">n = 150
+p = 70
+X, y, b = gen_lstsq(n, p, sig=0.1)
+b_QR = solve_lstsq_qr(X, y)
+b_normal = solve_lstsq_normal(X, y)
+# measure the norm
+la.norm(b_QR - b_normal) &lt; 1e-4
+</code></pre>
+<pre><code>True
+</code></pre>
+<pre><code class="language-python"># calculate solve_lstsq
+b_scipy = la.lstsq(X, y)[0]
+# measure the difference: QR estimation
+la.norm(b_scipy - b_QR) &lt; 1e-4
+</code></pre>
+<pre><code>True
+</code></pre>
+<pre><code class="language-python"># measure the difference: normal estimation
+la.norm(b_scipy - b_normal) &lt; 1e-4
+</code></pre>
+<pre><code>True
+</code></pre>
+<h3>Estimate the Error</h3>
+<p>Estimate the error in the fit using the equation $\frac{1}{n}|X * \hat{b} - y|_2^2$.</p>
+<pre><code class="language-python">def err(X, y, bhat):
+    &quot;&quot;&quot;
+    Estimate the error by using (1/n) ||X * bhat - y||^2
+    
+    Input
+    ----------
+    X: nxp numpy matrix in random numbers
+    y: nx1 numpy vector
+    bhat: px1 numpy vector
+    
+    Output
+    ----------
+    error: a number represents error in the fit
+    &quot;&quot;&quot;
+    # get n by length of y
+    n = len(y)
+    # calculate error
+    error = (1/n) * np.power(la.norm(X @ bhat - y), 2)
+    return error
+</code></pre>
+<pre><code class="language-python"># plot error vs noise parameter sig
+n = 100
+p = 50
+# sig in logarithmic distribution
+sig = np.power(10, np.linspace(-4, 1, n+1))
+
+error = []
+for s in sig:
+    # generate X, y, and bhat
+    X, y, b = gen_lstsq(n, p, s)
+    bhat = solve_lstsq_normal(X, y)
+    error.append(err(X, y, bhat))
+plt.loglog(sig, error)
+plt.xlabel(&quot;log(noise)&quot;)
+plt.ylabel(&quot;log(error)&quot;)
+plt.title(&quot;loglog-scale graph of error vs noise by solve_lstsq_normal&quot;)
+</code></pre>
+<pre><code>Text(0.5, 1.0, 'loglog-scale graph of error vs noise by solve_lstsq_normal')
+</code></pre>
+<p><img src="/images/Linear_Models/output_24_1.png" alt="png"></p>
+<h3>Which of <code>solve_lstsq_qr</code> and <code>solve_lstsq_normal</code> is faster?</h3>
+<pre><code class="language-python">n = 100
+p = 50
+X, y, b = gen_lstsq(n, p, sig=0.1)
+start = time()
+b_QR = solve_lstsq_qr(X, y)
+end = time()
+print(&quot;Time of solve_lstsq_qr is &quot; + str(end-start) + &quot;s.&quot;)
+</code></pre>
+<pre><code>Time of solve_lstsq_qr is 0.006086111068725586s.
+</code></pre>
+<pre><code class="language-python">start = time()
+b_normal = solve_lstsq_normal(X, y)
+end = time()
+print(&quot;Time of solve_lstsq_normal is &quot; + str(end-start) + &quot;s.&quot;)
+</code></pre>
+<pre><code>Time of solve_lstsq_normal is 0.0029091835021972656s.
+</code></pre>
+<hr>
+<p>Based on the time above that 0.006086111068725586s (solve_lstsq_qr) &gt; 0.0029091835021972656s (solve_lstsq_normal), solve_lstsq_normal is slightly faster.</p>
+<ul>
+<li>Number of operations of solve_lstsq_qr:$\frac{2n^3}{3}$</li>
+<li>Number of operations of solve_lstsq_normal: $\frac{n^3}{3}$</li>
+</ul>
+<p>Asymptotically, both of them order are ${O(p^3)}$.</p>
+<h3>Optimization Question</h3>
+<p>Solve the minimization problem
+\begin{equation}
+\mathop{\mathsf{minimize}}_b \frac{1}{n}|X*b - y|_2^2
+\end{equation}</p>
+<p>We'd like to minimize the objective function
+\begin{equation}
+n f(b) = |X*b - y|_2^2 = (Xb - y)^T (Xb - y) = b^T X^T X b - 2 y^T X b + y^T y
+\end{equation}</p>
+<p>We might write the above expression as
+\begin{equation}
+n f(b) \sum_{i,j} b_i (X^T X)<em>{i,j} b_j - 2\sum</em>{j,i} y_i X_{i,j} b_j + y^T y
+\end{equation}</p>
+<p>We can take a derivative with respect to $b_j$
+\begin{equation}
+n \frac{\partial f}{\partial b_j} = \sum_{i\ne j} b_i (X^T X)<em>{i,j} + \sum</em>{i\ne j} (X^T X)<em>{j,i} b_i + 2 (X^T X)</em>{j,j} b_j  - 2\sum_{i} y_i X_{i,j}
+\end{equation}</p>
+<p>Putting this in matrix form, we obtain
+\begin{equation}
+J_f(b) =  \frac{1}{n}\big( b^T (X^T X) + b^T (X^T X)^T - 2y^T X\big) = \frac{2}{n} b^T (X^T X) -\frac{2}{n}y^T X
+\end{equation}</p>
+<p>So we can write $J_f(b) = \frac{2}{n} b^T (X^T X) -\frac{2}{n} y^T X$</p>
+<pre><code class="language-python">def solve_lstsq_opt(X, y):
+    &quot;&quot;&quot;
+    Solve the minization problem.
+    
+    Input
+    ----------
+    X: nxp numpy matrix in random numbers
+    y: nx1 numpy vector
+    
+    Output
+    ----------
+    solver: a number represents the minization solution
+    &quot;&quot;&quot;
+    n, p = X.shape
+    # define the objective function
+    def f(b):
+        &quot;&quot;&quot;
+        Define function: (1/n)||X * b - y||^2
+        
+        Input
+        ----------
+        b: px1 numpy vector
+
+        Output
+        ----------
+        f_b: a number represents the function value
+        &quot;&quot;&quot;
+        f_b = (1/n) * np.power(la.norm(X @ b - y), 2)
+        return f_b
+    # define Jacobian
+    def Jf(b):
+        &quot;&quot;&quot;
+        Find the Jacobian of the function
+        
+        Input
+        ----------
+        b: px1 numpy vector
+
+        Output
+        ----------
+        Jf_b: a vector represents the Jacobian of the function
+        &quot;&quot;&quot;
+        Jf_b = (2/n) * b.T @ (X.T @ X) - (2/n) * y.T @ X
+        return Jf_b
+    solver = opt.minimize(f, np.random.rand(p), jac = Jf)
+    return solver
+</code></pre>
+<h4>Check</h4>
+<p>We can generate a few random problems to test that <code>solve_lstsq_opt</code> agrees with <code>solve_lstsq_qr</code> and <code>solve_lstsq_normal</code>.</p>
+<pre><code class="language-python"># first test
+n = 300
+p = 100
+X, y, b = gen_lstsq(n, p, sig=0.1)
+b_QR = solve_lstsq_qr(X, y)
+b_normal = solve_lstsq_normal(X, y)
+# x is the solution array
+b_opt = solve_lstsq_opt(X, y).x
+</code></pre>
+<pre><code class="language-python"># measure the difference: QR estimation
+la.norm(b_opt - b_QR) &lt; 1e-4
+</code></pre>
+<pre><code>True
+</code></pre>
+<pre><code class="language-python"># measure the difference: normal estimation
+la.norm(b_opt - b_normal) &lt; 1e-4
+</code></pre>
+<pre><code>True
+</code></pre>
+<pre><code class="language-python">n = 300
+p = 100
+X, y, b = gen_lstsq(n, p, sig=0.1)
+b_QR = solve_lstsq_qr(X, y)
+b_normal = solve_lstsq_normal(X, y)
+# x is the solution array
+b_opt = solve_lstsq_opt(X, y).x
+</code></pre>
+<pre><code class="language-python"># measure the difference: QR estimation
+la.norm(b_opt - b_QR) &lt; 1e-4
+</code></pre>
+<pre><code>True
+</code></pre>
+<pre><code class="language-python"># measure the difference: normal estimation
+la.norm(b_opt - b_normal) &lt; 1e-4
+</code></pre>
+<pre><code>True
+</code></pre>
+<pre><code class="language-python"># second test
+n = 150
+p = 70
+X, y, b = gen_lstsq(n, p, sig=0.1)
+b_QR = solve_lstsq_qr(X, y)
+b_normal = solve_lstsq_normal(X, y)
+# x is the solution array
+b_opt = solve_lstsq_opt(X, y).x
+</code></pre>
+<pre><code class="language-python"># measure the difference: QR estimation
+la.norm(b_opt - b_QR) &lt; 1e-4
+</code></pre>
+<pre><code>True
+</code></pre>
+<pre><code class="language-python"># measure the difference: normal estimation
+la.norm(b_opt - b_normal) &lt; 1e-4
+</code></pre>
+<pre><code>True
+</code></pre>
+<pre><code class="language-python">n = 150
+p = 70
+X, y, b = gen_lstsq(n, p, sig=0.1)
+b_QR = solve_lstsq_qr(X, y)
+b_normal = solve_lstsq_normal(X, y)
+# x is the solution array
+b_opt = solve_lstsq_opt(X, y).x
+</code></pre>
+<pre><code class="language-python"># measure the difference: QR estimation
+la.norm(b_opt - b_QR) &lt; 1e-4
+</code></pre>
+<pre><code>True
+</code></pre>
+<pre><code class="language-python"># measure the difference: normal estimation
+la.norm(b_opt - b_normal) &lt; 1e-4
+</code></pre>
+<pre><code>True
+</code></pre>
+<h3>How fast is <code>solve_lstsq_opt</code> compared to the functions above?</h3>
+<pre><code class="language-python">n = 300
+p = 100
+X, y, b = gen_lstsq(n, p, sig=0.1)
+start = time()
+b_opt = solve_lstsq_opt(X, y)
+end = time()
+print(&quot;Time of solve_lstsq_opt(X, y) is &quot; + str(end-start) + &quot;s.&quot;)
+</code></pre>
+<pre><code>Time of solve_lstsq_opt(X, y) is 0.051744937896728516s.
+</code></pre>
+<pre><code class="language-python"># number of evaluations of the objective functions
+b_opt.nfev
+</code></pre>
+<pre><code>39
+</code></pre>
+<hr>
+<p>0.051744937896728516s (solve_lstsq_opt) &gt; 0.006086111068725586s (solve_lstsq_qr) &gt; 0.0029091835021972656s (solve_lstsq_normal)</p>
+<p>Comparing to the functions in Part A, solve_lstsq_opt is much slower.</p>
+<p>Comparing ${O(p^2 * n * nfev)}$ (solve_lstsq_opt) and ${O(p^3)}$ (solve_lstsq_qr and solve_lstsq_normal),</p>
+<p>${O(p^2 * n * nfev)}$ is much larger mainly because of ${nfev}$ which is large. (we can consider ${O(p^2 * n)}$ and ${O(p^3)}$ are basically the same asymptotically)</p>
+<h2>Ridge Regression</h2>
+<p>We'll now turn to the problem of what to do when <code>n &lt; p</code>.  In this case we can find a $b$ which satisfies the equation $X * b = y$ exactly, but there are many possible values of $b$ which can satisfy the equation.</p>
+<p>Ridge regression seeks to solve the following optimization problem:</p>
+<p>\begin{equation}
+\mathop{\mathsf{minimize}}_b \frac{1}{n}|X*b - y|_2^2 + \lambda |b|_2^2
+\end{equation}</p>
+<p>$\lambda$ is the regularize parameter.</p>
+<h3>Optimization</h3>
+<p>Jacobian for the objective function for the minimization problem is below, by linearity,</p>
+<p>$J_f(b) = \frac{2}{n} b^T (X^T X) -\frac{2}{n} y^T X + 2\lambda b$</p>
+<pre><code class="language-python">def solve_ridge_opt(X, y, lam=0.1):
+    &quot;&quot;&quot;
+    Solve the minization problem.
+    
+    Input
+    ----------
+    X: nxp numpy matrix in random numbers
+    y: nx1 numpy vector
+    lam: a number represents the regularization term
+    
+    Output
+    ----------
+    solver: a number represents the minization solution
+    &quot;&quot;&quot;
+    n, p = X.shape
+    # define the objective function
+    def f(b):
+        &quot;&quot;&quot;
+        Define function: (1/n)||X * b - y||^2 + lam ||b||^2
+        
+        Input
+        ----------
+        b: px1 numpy vector
+
+        Output
+        ----------
+        f_b: a number represents the function value
+        &quot;&quot;&quot;
+        f_b = (1/n) * np.power(la.norm(X @ b - y), 2) + lam * np.power(la.norm(b), 2)
+        return f_b
+    # define Jacobian
+    def Jf(b):
+        &quot;&quot;&quot;
+        Find the Jacobian of the function
+        
+        Input
+        ----------
+        b: px1 numpy vector
+
+        Output
+        ----------
+        Jf_b: a vector represents the Jacobian of the function
+        &quot;&quot;&quot;
+        Jf_b = (2/n) * b.T @ (X.T @ X) - (2/n) * y.T @ X + 2 * lam * b
+        return Jf_b
+    solver = opt.minimize(f, np.random.rand(p), jac = Jf)
+    return solver
+</code></pre>
+<h3>Compute the error</h3>
+<p>Set <code>n = 50</code>, <code>p=100</code>, and <code>sig=0.1</code>. Let's make a plot that displays the error of <code>bhat</code> computed using <code>solve_ridge_opt</code> as <code>lam</code> varies between <code>1e-4</code> and <code>1e2</code>.</p>
+<pre><code class="language-python"># plot error vs lambda
+n = 50
+p = 100
+sig = 0.1
+X, y, b = gen_lstsq(n, p, sig)
+# lam in logarithmic distribution
+lam = np.power(10, np.linspace(-4, 2, n+1))
+
+error = []
+for l in lam:
+    # generate X and y
+    bhat = solve_ridge_opt(X, y, l).x
+    error.append(err(X, y, bhat))
+plt.semilogx(lam, error)
+plt.xlabel(&quot;log(lambda)&quot;)
+plt.ylabel(&quot;error&quot;)
+plt.title(&quot;semilogx-scale graph of error vs noise&quot;)
+</code></pre>
+<pre><code>Text(0.5, 1.0, 'semilogx-scale graph of error vs noise')
+</code></pre>
+<p><img src="/images/Linear_Models/output_51_1.png" alt="png"></p>
+<h2>Lasso</h2>
+<p>The Lasso is L1-regularized regression.  This is often used when <code>p &gt; n</code>, and when the parameter vector <code>b</code> is assumed to be sparse, meaning that it has few non-zero entries.</p>
+<p>The minimization problem is
+\begin{equation}
+\mathop{\mathsf{minimize}}_b \frac{1}{n} |X * b - y|_2^2 + \lambda |b|_1
+\end{equation}</p>
+<p>Where again, $\lambda$ can be chosen.</p>
+<h3>Generate Data</h3>
+<p>We need to modify our generation of data to produce sparse <code>b</code>.</p>
+<pre><code class="language-python">def gen_lstsq_sparse(n, p, sig=0.1, k=10):
+    &quot;&quot;&quot;
+    Generate a linear least squares problem.
+    
+    Input
+    ----------
+    n: an integer represents number of rows of observations
+    p: an integer represents number of features
+    sig=0.1: a number represents variance decides random noise with default 0.1
+    k=10: an integer represents the number of random entries that set to 1 with default 10
+    
+    Output
+    ----------
+    X: nxp numpy matrix in random numbers
+    y: nx1 numpy vector
+    b: px1 numpy vector in random numbers
+    &quot;&quot;&quot;
+    # generate nxp matrix X and px1 vector b
+    X = np.random.randn(n, p)
+    b = np.zeros(p)
+    # get k random enrties that will be set to 1
+    non_zero_pos = np.random.choice(p,k)
+    for i in non_zero_pos:
+        b[i] = 1
+    
+    # use the formula above: y = X * b + eps
+    y = np.dot(X, b) + sig * np.random.randn(n)
+    return X, y, b    
+</code></pre>
+<h3>Optimization</h3>
+<p>Recall we want to find <code>bhat</code> to solve
+\begin{equation}
+\mathop{\mathsf{minimize}}_b \frac{1}{n} |X * b - y|_2^2 + \lambda |b|_1
+\end{equation}</p>
+<p>Jacobian for the objective function for the minimization problem is below,</p>
+<p>$J_f(b) = \frac{2}{n} b^T (X^T X) -\frac{2}{n} y^T X + \lambda sign(b)$</p>
+<p>note that np.sign(0) = 0</p>
+<pre><code class="language-python">def solve_lasso_opt(X, y, lam=0.1):
+    &quot;&quot;&quot;
+    Solve the minization problem.
+    
+    Input
+    ----------
+    X: nxp numpy matrix in random numbers
+    y: nx1 numpy vector
+    lam: a number represents the regularization term
+    
+    Output
+    ----------
+    solver: a number represents the minization solution
+    &quot;&quot;&quot;
+    n, p = X.shape
+    # define the objective function
+    def f(b):
+        &quot;&quot;&quot;
+        Define function: (1/n)||X * b - y||(2)^2 + lam ||b||(1)
+        
+        Input
+        ----------
+        b: px1 numpy vector
+
+        Output
+        ----------
+        f_b: a number represents the function value
+        &quot;&quot;&quot;
+        f_b = (1/n) * np.power(la.norm(X @ b - y), 2) + lam * la.norm(b, 1)
+        return f_b
+    # define Jacobian
+    def Jf(b):
+        &quot;&quot;&quot;
+        Find the Jacobian of the function
+        
+        Input
+        ----------
+        b: px1 numpy vector
+
+        Output
+        ----------
+        Jf_b: a vector represents the Jacobian of the function
+        &quot;&quot;&quot;
+        Jf_b = (2/n) * b.T @ (X.T @ X) - (2/n) * y.T @ X + lam * np.sign(b)
+        return Jf_b
+    solver = opt.minimize(f, np.random.rand(p), jac = Jf)
+    return solver
+</code></pre>
+<h3>Compute the Error</h3>
+<p>Set <code>n = 50</code>, <code>p=100</code>,<code>sig=0.1</code>, and <code>k=10</code> to generate a problem using <code>gen_lstsq_sparse</code>.</p>
+<pre><code class="language-python"># plot error vs lambda
+n = 50
+p = 100
+sig = 0.1
+k = 10
+X, y, b = gen_lstsq_sparse(n, p, sig, k)
+# lam in logarithmic distribution
+lam = np.power(10, np.linspace(-4, 2, n+1))
+
+error = []
+for l in lam:
+    # generate X and y
+    bhat = solve_lasso_opt(X, y, l).x
+    error.append(err(X, y, bhat))
+# print(bhat)
+plt.semilogx(lam, error)
+plt.xlabel(&quot;log(lambda)&quot;)
+plt.ylabel(&quot;error&quot;)
+plt.title(&quot;semilogx-scale graph of error vs noise&quot;)
+</code></pre>
+<pre><code>Text(0.5, 1.0, 'semilogx-scale graph of error vs noise')
+</code></pre>
+<p><img src="/images/Linear_Models/output_58_1.png" alt="png"></p>
+
+							
+			
+			
+					</section>
+					</div>
+
+				<!-- Footer -->
+					<footer id="footer">
+						<section>
+							<h2>Techniques</h2>
+							<p> Python &bull; Scipy &bull; Linear Algebra &bull; Ridge Regression &bull; Lasso &bull; Error
+							</p>
+							<ul class="actions">
+								<li><a href="index.html" class="button">Go To Main</a></li>
+							</ul>
+						</section>
+						<section>
+							<h2>Contact</h2>
+							<dl class="alt">
+								<dt>Address</dt>
+								<dd>Chicago, IL &bull; Los Angeles, CA</dd>
+								<dt>Phone</dt>
+								<dd>(424) 407-6619</dd>
+								<dt>Email</dt>
+								<dd><a href="#">jingxuanzhang@uchicago.edu</a></dd>
+							</dl>
+							<ul class="icons">
+								<li><a href="https://www.linkedin.com/in/stancyzhang/" class="icon brands fa-linkedin alt"><span class="label">LinkedIn</span></a></li>
+								<li><a href="https://github.com/StancyZhang" class="icon brands fa-github alt"><span class="label">GitHub</span></a></li>
+							</ul>
+						</section>
+						<p class="copyright">&copy; Stancy Portfolio. Design: <a href="https://html5up.net">HTML5 UP</a>.</p>
+					</footer>
+
+			</div>
+
+		<!-- Scripts -->
+			<script src="assets/js/jquery.min.js"></script>
+			<script src="assets/js/jquery.scrollex.min.js"></script>
+			<script src="assets/js/jquery.scrolly.min.js"></script>
+			<script src="assets/js/browser.min.js"></script>
+			<script src="assets/js/breakpoints.min.js"></script>
+			<script src="assets/js/util.js"></script>
+			<script src="assets/js/main.js"></script>
+
+	</body>
+</html>

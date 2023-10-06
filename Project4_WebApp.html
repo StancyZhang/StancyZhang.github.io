@@ -1,0 +1,131 @@
+<!DOCTYPE HTML>
+<!--
+	Stellar by HTML5 UP
+	html5up.net | @ajlkn
+	Free for personal and commercial use under the CCA 3.0 license (html5up.net/license)
+-->
+<html>
+	<head>
+		<title>Stancy Zhang</title>
+		<script type="text/x-mathjax-config">
+			MathJax.Hub.Config({tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}});
+		  </script>
+		  <script type="text/javascript"
+			src="http://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
+		  </script>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
+		<link rel="stylesheet" href="assets/css/main.css" />
+		<noscript><link rel="stylesheet" href="assets/css/noscript.css" /></noscript>
+	</head>
+	<body class="is-preload">
+
+		<!-- Wrapper -->
+			<div id="wrapper">
+
+				<!-- Header -->
+					<header id="header">
+						<h1>LA Travel Planner</h1>
+						<h3>A comprehensive endeavor combining web scraping expertise and web development to accumulate an extensive database of Los Angeles' tourist attractions, hotels, and restaurants. The project delivers a user-centric platform, using Python and Flask, offering ease in travel planning through personalized route generation.</h3>
+						<p>June 2021</p>
+						<a href="index.html" class="button">Go To Main</a>
+					</header>
+
+				<!-- Main -->
+					<div id="main">
+
+						<!-- Content -->
+							<section id="content" class="main">
+								<h2>Goal</h2>
+								<hr>
+
+<p>This is a review about the project, <strong>LA Travel Planner</strong>, that I worked with Ashley Lu and Jaya Ren in group <strong>The Travelers</strong> this quarter in PIC16B. I really appreciate and enjoy working in such a team with support and helps from Professor Chodrow and Erin. I also put links to Ashley's and Jaya's reflection blog posts and our project's GitHub repository below.</p>
+<ul>
+<li>Group Members' Reflection Blog Posts</li>
+</ul>
+<p>You may <a href="https://ashley-lu.github.io/reflection-blog-post/">click here</a> that will guide you to Ashley's reflection blog post and <a href="https://jren99.github.io/traveller-project-reflection/">click here</a> that will guide you to Jaya's reflection blog post.</p>
+<ul>
+<li>Our Webapp -- <strong>LA Travel Planner</strong></li>
+</ul>
+<p>If you are interested in our webapp, you may <a href="https://github.com/jren99/pic16b_project">click here</a> that will guide you to our project's GitHub repository. You may read the README.md file to know how our webapp works.</p>
+<span class="image"><img src="images/Logo.png" alt="" width="600" height="400" /></span>
+<p>Lastly, I am very glad and thankful for studying in such a computing course with so many wonderful peers. Throughout the past ten weeks, we used imaginations to write our project pitch, formed groups based on interests, and worked together to pursue the same goal. Overall, I had an unforgettable experience in this course and am going to reflect on the past ten-week process of doing the group project from the following aspects.</p>
+<h3>Why did you decide to create LA Travel Planner as our project?</h3>
+<p>When writing the project pitch, I had an idea of creating software, Hotel Selection Filter, that can predict the possible hotels the users will be likely to book for their next trips based on the past hotel booking histories. Inspiring by this project pitch's topic, we decided to focus on doing a project about tourism. After combining ideas, such as webscraping and interactive maps, from all of us, we all agreed that making a travel planning tool, providing lists of places and creating routes by different places as inputs, is a good idea for our project.</p>
+<h3>Overall, what did you achieve in your project?</h3>
+<p><strong>- Backend</strong></p>
+<p>We mainly split the backend into two parts, webscraping and route generator. I mainly did the webscraping part, while Ashley mainly learned how to create the route. Assuming the database of our webapp contains only places in Los Angeles, I used different keywords on TripAdvisor and finally found a proper webpage containing recommended tourist attractions, hotels, and restaurants in Los Angeles that I might use the webscraping skills both learned in lectures and self-learned on different websites. By observing the Developer Tools and defining different Python functions, I successfully extracted data from TripAdvisor and saved the extracted data into csv files. In short, our webapp has 2520 tourist sites, 420 hotels, and 13460 restaurants as sufficient data support by webscraping. By using the webscraping locations as inputs for the route, Ashley learned how to use geocoding and generate routes on interactive maps with the support of different Python packages, where the created route map plays one of the key roles for our project.</p>
+<p><strong>- Frontend</strong></p>
+<p>Based on the codes from the backend, Jaya and I used Flask to build a webapp as a travel planning tool that contains various tourist sites, hotels, and restaurants in Los Angeles and designs personalized routes easily and efficiently for users who rarely have time caused by their busy works or who are struggling with deciding the places they want to go. The photo below is a screenshot of our webapp's Home Page.</p>
+<span class="image"><img src="images/Webapp Home Page.png" alt="" width="900" height="600" /></span>
+<p>At the top of our webapp, there are other buttons that the users can click besides Home button:</p>
+<ul>
+<li>Tourist Site Recommendations &amp; Hotel Recommendations &amp; Restaurant Recommendations</li>
+</ul>
+<p>On these webpages, the users are able to see the lists of tourist attractions, hotels, and restaurants that the data are extracted from TripAdvisor by webscraping. The data lists can also be filtered based on users' input keywords.</p>
+<ul>
+<li>Plan Your Trip!</li>
+</ul>
+<p>This webpage will generate the daily routes based on users' inputs of the tourist sites they want to go to, the number of days they plan to stay, the hotel they want to live in, and the mode of transportation. The users may follow the instructions on the webpage to see the routes by clicking few links.</p>
+<ul>
+<li>Contact Us</li>
+</ul>
+<p>The user can give any suggestions to us by submitting a form on this webpage.</p>
+<h3>What are two aspects of your project that you are especially proud of?</h3>
+<p>I am very satisfied with the overall achievement of our project that we had a fixed and stable backend and frontend. Specifically speaking, I am proud of the large database our webapp has that I extracted on TripAdvisor by webscraping after experiencing many difficulties and failures. Since it was my first time webscraping, I was excited but nervous at first. After watching the lectures discussing webscraping, I also used a lot of time searching online about tutorial articles and videos to learn more about webscraping. I remember that one sentence said that &quot;The beginning is always the hardest.&quot; Thus, I tried to learn webscraping slowly whenever facing various difficulties and tried not to be &quot;beaten&quot; by the failure of extracting wrong information. I still remembered that I spent several days continue to work on webscraping after trying to use codes, such as &quot;div&quot;, for hundreds of trials to extract the hotel information. In the end, I successfully extracted the hotel information I want on TripAdvisor and made some progress in learning webscraping. Overall, I am very satisfied with the data that I extracted by webscraping, which can be used as inputs for the route generator. Moreover, the extracted data are shown in data lists on our webapp, which are very useful for the users to know what are the places they can and like to go to in Los Angeles.</p>
+<p>Additionally, I am also very proud of how our webapp looks like and how it operates. Jaya started learning how to build the webapp by PHP. However, since Jaya had some trouble in showing the route generator on the webapp by using PHP and I had finished webscraping data at that time, I decided to try to build the webapp by using Flask. At the beginning of building the webapp by Flask, I, a &quot;newcomer&quot; in building webapps, watched a lot of videos and read many tutorials about how to use Flask to build webapp after watching the discussion about making a webapp by Flask. After building the basic structure of the webapp, I successfully learned how to add different functionality, such as filtering the data lists by users' input keywords and receive users' inputs of the places they want to go to generate the route, to the webapp. Working with Jaya, we set up live meetings to update the webapp status to each other and helped each other while building the webapp. At last, we successfully updated the webapp with more functionality and made it become prettier. In general, I am very excited that I not only learned how to build a basic webapp by Flask but also understood how the cool route generator works by different backend functions written by Ashley when incorporating backend codes to the frontend.</p>
+<h3>What are two things you would suggest doing to further improve your project?</h3>
+<p>First of all, I would suggest using more advanced Python packages to extract data by webscraping after learning more about webscraping. I spent almost an hour when extracting 2520 tourist sites, 420 hotels, and 13460 restaurants from TripAdvisor. Such a long time might be caused by the factor that I am not in the United States, and connecting to TripAdvisor webpage was quite slowly as a result. But I believe there might be some more efficient methods to extract data by webscraping. When we find out any efficient Python packages that will fasten our webscraping speed, we might be able to have data about the recommended places in other cities in California, even in the whole world. This would make our webapp become more useful.</p>
+<p>Besides that, I think it would be better if we allow users to input places as many as they want, instead of only allowing inputting as most ten places. Since all of us have not learned Flask before, we used a quite basic method to generate routes by limiting the number of input places. But I think we would be able to figure out how to modify the app.py and some of the html files to enable more inputs of places and generate more daily interactive maps after learning more techniques or skills about Flask.</p>
+<h3>How does what you achieved compare to what you set out to do in your proposal?</h3>
+<p>We mostly followed the tentative timeline; the only difference is that we worked on webcraping and route generator at the same time. By setting small goals in advance and helping each other, we successfully wrote all the backend codes and built a webapp as the frontend; what we achieved in this quarter almost completely matches what we proposed at the beginning of this quarter. However, the only difference between the actual achievement and the proposal is that we expected that our webapp would enable the users to choose a city in any country, or at least in California, and then show the places they can go in that city and generate the personalized route. However, since time is limited, we did not extract data in other cities by webscraping. Therefore, our webapp is restricted to show the data lists and generate routes only in Los Angeles.</p>
+<p>In fact, we added new details that we did not mention in the proposal. For instance, we designed the webapp that contains both the Home Page and Contact Us Page to make the webapp look complete. Also, in order to make further improvements, we added a form on Contact Us Page for the users' to submit any suggestions to us. What's more, the data lists of recommended tourist attractions, hotels, and restaurants can be filtered based on the users' input keywords.</p>
+<h3>Reflection</h3>
+<p>Generally speaking, it is undeniable that we met different kinds of difficulties when doing this project, had various great ideas that we all want to make our project become better, and faced the fact that we worked remotely in three different time zones under the pandemic. But we, as a team, always support each other and have such a final achievement that we are all very proud of. It was such a correct decision that I have ever made to take PIC16B. I believe having such a meaningful experience will influence me in my future learning. Thank you for everyone's support and help again!</p>
+
+							
+			
+			
+					</section>
+					</div>
+
+				<!-- Footer -->
+					<footer id="footer">
+						<section>
+							<h2>Techniques</h2>
+							<p> SQL &bull; Python &bull; Pandas &bull; Flask &bull; WebScraping &bull; Geopy &bull; Folium &bull; Polyline</p>
+							<ul class="actions">
+								<li><a href="index.html" class="button">Go To Main</a></li>
+							</ul>
+						</section>
+						<section>
+							<h2>Contact</h2>
+							<dl class="alt">
+								<dt>Address</dt>
+								<dd>Chicago, IL &bull; Los Angeles, CA</dd>
+								<dt>Phone</dt>
+								<dd>(424) 407-6619</dd>
+								<dt>Email</dt>
+								<dd><a href="#">jingxuanzhang@uchicago.edu</a></dd>
+							</dl>
+							<ul class="icons">
+								<li><a href="https://www.linkedin.com/in/stancyzhang/" class="icon brands fa-linkedin alt"><span class="label">LinkedIn</span></a></li>
+								<li><a href="https://github.com/StancyZhang" class="icon brands fa-github alt"><span class="label">GitHub</span></a></li>
+							</ul>
+						</section>
+						<p class="copyright">&copy; Stancy Portfolio. Design: <a href="https://html5up.net">HTML5 UP</a>.</p>
+					</footer>
+
+			</div>
+
+		<!-- Scripts -->
+			<script src="assets/js/jquery.min.js"></script>
+			<script src="assets/js/jquery.scrollex.min.js"></script>
+			<script src="assets/js/jquery.scrolly.min.js"></script>
+			<script src="assets/js/browser.min.js"></script>
+			<script src="assets/js/breakpoints.min.js"></script>
+			<script src="assets/js/util.js"></script>
+			<script src="assets/js/main.js"></script>
+
+	</body>
+</html>

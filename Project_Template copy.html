@@ -1,0 +1,225 @@
+<!DOCTYPE HTML>
+<!--
+	Stellar by HTML5 UP
+	html5up.net | @ajlkn
+	Free for personal and commercial use under the CCA 3.0 license (html5up.net/license)
+-->
+<html>
+	<head>
+		<title>Stancy Zhang</title>
+		<script type="text/x-mathjax-config">
+			MathJax.Hub.Config({tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}});
+		  </script>
+		  <script type="text/javascript"
+			src="http://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
+		  </script>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
+		<link rel="stylesheet" href="assets/css/main.css" />
+		<noscript><link rel="stylesheet" href="assets/css/noscript.css" /></noscript>
+	</head>
+	<body class="is-preload">
+
+		<!-- Wrapper -->
+			<div id="wrapper">
+
+				<!-- Header -->
+					<header id="header">
+						<h1>Title</h1>
+						<h2>Description - Same as the one on the main page </h2>
+						<p>Month Year</p>
+						<a href="index.html" class="button">Go To Main</a>
+					</header>
+
+				<!-- Main -->
+					<div id="main">
+
+						<!-- Content -->
+							<section id="content" class="main">
+								<h2>Goal</h2>
+								<p>Content</p>
+								<iframe src="includes/Brazil_Yearly_Temperature_Increase.html" width="100%" height="800"></iframe>
+								<h2>§1 Create a Database</h2>
+								<h3>Import the Data</h3>
+								<p>First of all, I want to import three data sets that I am going to use for this blog post. Those three data sets are now in separate csv files, which are called "temps.csv", "station-metadata.csv", and "countries.csv". Pandas package is a powerful package for analyzing dataframes in Python that I want to use when importing those csv files.</p>
+								<pre><code># import pandas package
+import pandas as pd
+# import temps.csv into a DataFrame called temperature_data
+temperature_data = pd.read_csv("temps.csv")
+# import station-metadata.csv into a DataFrame called station_data
+station_data = pd.read_csv("station-metadata.csv")
+# import countries.csv into a DataFrame called country_data
+country_data = pd.read_csv("countries.csv")</code></pre>
+							
+								<p>After importing the data sets, I want to check the first five rows of each DataFrame to be familiar with the information in it, especially paying attention to the column names. I am going to use df.head( ) to check the first five rows of each of the DataFrame.</p>
+								<pre><code>temperature_data.head()</code></pre>
+								<div class="table-wrapper">
+									<style scoped>
+										.dataframe tbody tr th:only-of-type {
+											vertical-align: middle;
+										}
+									
+										.dataframe tbody tr th {
+											vertical-align: top;
+										}
+									
+										.dataframe thead th {
+											text-align: right;
+										}
+									</style>
+									<table border="1" class="dataframe alt">
+									  <thead>
+										<tr style="text-align: right;">
+										  <th></th>
+										  <th>ID</th>
+										  <th>Year</th>
+										  <th>VALUE1</th>
+										  <th>VALUE2</th>
+										  <th>VALUE3</th>
+										  <th>VALUE4</th>
+										  <th>VALUE5</th>
+										  <th>VALUE6</th>
+										  <th>VALUE7</th>
+										  <th>VALUE8</th>
+										  <th>VALUE9</th>
+										  <th>VALUE10</th>
+										  <th>VALUE11</th>
+										  <th>VALUE12</th>
+										</tr>
+									  </thead>
+									  <tbody>
+										<tr>
+										  <th>0</th>
+										  <td>ACW00011604</td>
+										  <td>1961</td>
+										  <td>-89.0</td>
+										  <td>236.0</td>
+										  <td>472.0</td>
+										  <td>773.0</td>
+										  <td>1128.0</td>
+										  <td>1599.0</td>
+										  <td>1570.0</td>
+										  <td>1481.0</td>
+										  <td>1413.0</td>
+										  <td>1174.0</td>
+										  <td>510.0</td>
+										  <td>-39.0</td>
+										</tr>
+										<tr>
+										  <th>1</th>
+										  <td>ACW00011604</td>
+										  <td>1962</td>
+										  <td>113.0</td>
+										  <td>85.0</td>
+										  <td>-154.0</td>
+										  <td>635.0</td>
+										  <td>908.0</td>
+										  <td>1381.0</td>
+										  <td>1510.0</td>
+										  <td>1393.0</td>
+										  <td>1163.0</td>
+										  <td>994.0</td>
+										  <td>323.0</td>
+										  <td>-126.0</td>
+										</tr>
+										<tr>
+										  <th>2</th>
+										  <td>ACW00011604</td>
+										  <td>1963</td>
+										  <td>-713.0</td>
+										  <td>-553.0</td>
+										  <td>-99.0</td>
+										  <td>541.0</td>
+										  <td>1224.0</td>
+										  <td>1627.0</td>
+										  <td>1620.0</td>
+										  <td>1596.0</td>
+										  <td>1332.0</td>
+										  <td>940.0</td>
+										  <td>566.0</td>
+										  <td>-108.0</td>
+										</tr>
+										<tr>
+										  <th>3</th>
+										  <td>ACW00011604</td>
+										  <td>1964</td>
+										  <td>62.0</td>
+										  <td>-85.0</td>
+										  <td>55.0</td>
+										  <td>738.0</td>
+										  <td>1219.0</td>
+										  <td>1442.0</td>
+										  <td>1506.0</td>
+										  <td>1557.0</td>
+										  <td>1221.0</td>
+										  <td>788.0</td>
+										  <td>546.0</td>
+										  <td>112.0</td>
+										</tr>
+										<tr>
+										  <th>4</th>
+										  <td>ACW00011604</td>
+										  <td>1965</td>
+										  <td>44.0</td>
+										  <td>-105.0</td>
+										  <td>38.0</td>
+										  <td>590.0</td>
+										  <td>987.0</td>
+										  <td>1500.0</td>
+										  <td>1487.0</td>
+										  <td>1477.0</td>
+										  <td>1377.0</td>
+										  <td>974.0</td>
+										  <td>31.0</td>
+										  <td>-178.0</td>
+										</tr>
+									  </tbody>
+									</table>
+								</div>
+							
+			
+			
+					</section>
+					</div>
+
+				<!-- Footer -->
+					<footer id="footer">
+						<section>
+							<h2>Techniques</h2>
+							<p> SQL &bull; Python &bull; Pandas &bull; Plotly &bull; Interactive Geographic Graphs &bull; Linear Regression &bull; 3D Graphs
+							</p>
+							<ul class="actions">
+								<li><a href="index.html" class="button">Go To Main</a></li>
+							</ul>
+						</section>
+						<section>
+							<h2>Contact</h2>
+							<dl class="alt">
+								<dt>Address</dt>
+								<dd>Chicago, IL &bull; Los Angeles, CA</dd>
+								<dt>Phone</dt>
+								<dd>(424) 407-6619</dd>
+								<dt>Email</dt>
+								<dd><a href="#">jingxuanzhang@uchicago.edu</a></dd>
+							</dl>
+							<ul class="icons">
+								<li><a href="https://www.linkedin.com/in/stancyzhang/" class="icon brands fa-linkedin alt"><span class="label">LinkedIn</span></a></li>
+								<li><a href="https://github.com/StancyZhang" class="icon brands fa-github alt"><span class="label">GitHub</span></a></li>
+							</ul>
+						</section>
+						<p class="copyright">&copy; Stancy Portfolio. Design: <a href="https://html5up.net">HTML5 UP</a>.</p>
+					</footer>
+
+			</div>
+
+		<!-- Scripts -->
+			<script src="assets/js/jquery.min.js"></script>
+			<script src="assets/js/jquery.scrollex.min.js"></script>
+			<script src="assets/js/jquery.scrolly.min.js"></script>
+			<script src="assets/js/browser.min.js"></script>
+			<script src="assets/js/breakpoints.min.js"></script>
+			<script src="assets/js/util.js"></script>
+			<script src="assets/js/main.js"></script>
+
+	</body>
+</html>
